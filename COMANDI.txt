@@ -1,0 +1,29 @@
+Infinity X — comandi per chiunque (Windows)
+==========================================
+
+Prima di tutto installa Node.js 20:
+https://nodejs.org
+
+Poi scarica la cartella da GitHub (zip o clone), aprile in CMD
+e incolla questi due comandi, uno alla volta:
+
+    cd /d CARTELLA
+    prepara.bat
+
+Quando compare OK:
+
+    xxxx Admin.bat
+
+Esempio se la cartella e' sul Desktop:
+
+    cd /d C:\Users\TUO-NOME\Desktop\xxxx-Admin-Panel
+    prepara.bat
+    xxxx Admin.bat
+
+prepara.bat installa i pacchetti, sistema il database se c'e' gia' Postgres,
+e se non c'e' lascia che il pannello avvii il database da solo.
+
+Non serve Docker. Non serve scrivere npm a mano.
+
+Repo: https://github.com/Infinity-X202/xxxx-messenger
+Hub:  https://infinity-x202.github.io/xxxx-messenger/

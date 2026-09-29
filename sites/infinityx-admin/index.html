@@ -409,7 +409,7 @@
         <p class="section-label">01 · product</p>
         <h2 class="section-title">Admin Panel desktop app</h2>
         <p class="section-desc">
-          Download the zip, unzip, double-click <strong>xxxx Admin.bat</strong>. The app presses <strong>Start server</strong> for you, installs its own database, and shows your public link. No terminal, no Postgres install, no config — just copy and share.
+          Download the zip, unzip, then run two commands in CMD: <strong>prepara.bat</strong> and <strong>xxxx Admin.bat</strong>. Same steps for everyone. Node.js 20 is the only install.
         </p>
         <div class="desktop-hero">
           <h3>Pipeline in 5 moves</h3>
@@ -439,11 +439,11 @@
               <span>A <code style="display:inline;font-size:inherit">*.trycloudflare.com</code> link — send it to everyone.</span>
             </div>
           </div>
-          <div class="terminal" aria-label="Example commands">
-            <span class="dim"># you only do this</span><br />
-            <span class="cmd">.\xxxx Admin.bat</span><br />
-            <span class="cmd">Start server</span> <span class="dim">→ Copy link → share</span><br />
-            <span class="dim"># first run: setup runs inside the app (no manual npm)</span>
+          <div class="terminal" aria-label="Commands for everyone">
+            <span class="dim"># CMD, inside the unzipped folder</span><br />
+            <span class="cmd">prepara.bat</span><br />
+            <span class="cmd">xxxx Admin.bat</span><br />
+            <span class="dim"># wait for OK, then copy the link</span>
           </div>
         </div>
       </section>

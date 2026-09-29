@@ -71,13 +71,14 @@ npm run dev:server    # API + WS :3000
 npm run dev:web       # UI :5173
 ```
 
-**Admin desktop (Windows):**
+**Admin desktop (Windows) — due comandi, uguali per tutti:**
 
-```text
+```bat
+prepara.bat
 xxxx Admin.bat
 ```
 
-Richiede **Node 20.11+** già installato. Il launcher orchestra DB/API/Vite/tunnel.
+`prepara.bat` fa `npm install`, sistema Postgres se c’è già, e altrimenti il pannello avvia il database da solo. I comandi stanno anche in [`COMANDI.txt`](COMANDI.txt). Serve solo **Node.js 20**.
 
 **Produzione Docker:** `docker compose up --build` — vedi sezioni avanzate sotto.
 

@@ -30,6 +30,17 @@ Il desktop controller ([`apps/desktop/control.mjs`](../apps/desktop/control.mjs)
 
 ---
 
+## 1b · Comandi Windows (gli stessi per tutti)
+
+Dentro la cartella scompattata, in CMD:
+
+```bat
+prepara.bat
+xxxx Admin.bat
+```
+
+Sono gli unici comandi. Stesso testo in [`COMANDI.txt`](../COMANDI.txt) sul repository.
+
 ## 2 · Clone & env · non skippare
 
 ```powershell
