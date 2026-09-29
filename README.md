@@ -1,177 +1,133 @@
-# Infinity X Messenger
+<p align="center">
+  <strong>∞ INFINITY X · xxxx MESSENGER</strong><br/>
+  <sub>self-hosted · websocket · live cam · zero firebase</sub>
+</p>
 
-Piattaforma di messaggistica self-hosted (concetto simile a WhatsApp/Telegram), **senza Firebase**. Backend Node.js, PostgreSQL, Redis, WebSocket autenticato, predisposizione Cloudflare Tunnel ed E2EE.
+<p align="center">
+  <a href="https://infinitydev25.netlify.app">Admin Hub</a> ·
+  <a href="https://github.com/Infinity-X202/xxxx-messenger">GitHub</a> ·
+  <a href="docs/desktop-admin.md">Desktop setup</a> ·
+  <a href="docs/security.md">Security</a>
+</p>
 
-HTTPS/TLS **non** è End-to-End Encryption. Vedi `docs/e2ee.md`.
+---
 
-## 1. Requisiti
+## Cos'è **xxxx**
 
-- Node.js 20.11+
-- npm 10+
-- Docker e Docker Compose (per Postgres, Redis, produzione)
-- Opzionale: account Cloudflare e `cloudflared` per il tunnel
+**xxxx** è un messenger **self-hosted** — stile WhatsApp/Telegram, ma **tuo**: Node.js, PostgreSQL, Redis, WebSocket autenticato, tunnel Cloudflare opzionale, roadmap E2EE.
 
-## 2. Installazione
+> `HTTPS ≠ E2EE`. Leggi [`docs/e2ee.md`](docs/e2ee.md) prima di promettere “crittografia totale” agli amici.
+
+Niente Firebase. Niente vendor lock-in. Solo codice, `.env` e disciplina.
+
+---
+
+## Admin Panel App · desktop
+
+Il **pannello Infinity X** non è un plugin random: è il **centro di controllo** per server, tunnel, accessi e live cam.
+
+| Modalità | Cosa fa |
+| --- | --- |
+| **Windows desktop** | Doppio clic su [`xxxx Admin.bat`](xxxx%20Admin.bat) → avvia stack, tunnel, UI admin in iframe ([`apps/desktop/control.mjs`](apps/desktop/control.mjs)) |
+| **Web admin** | Login sul tunnel con codice admin → sezione **Admin** (solo dispositivi di fiducia) |
+| **Hub pubblico** | [infinitydev25.netlify.app](https://infinitydev25.netlify.app) — istruzioni, link repo, vibe Infinity X |
+
+Scarica / clona da questo repo; il `.bat` è il launcher “one-click” dopo `npm install`.
+
+Dettaglio install da sito → **[`docs/desktop-admin.md`](docs/desktop-admin.md)**.
+
+---
+
+## Live cam · max **3** utenti
+
+Oltre l’admin (**Adil**), puoi avere fino a **3** accessi con codice segreto.
+
+- Ogni **nome** compare sulla **live cam** (telefono → server).
+- Gestisci **Accessi** da Admin: elimina, aggiungi, rigenera codici.
+- Dopo un **nuovo accesso**, l’utente deve **rifare login** per attivare la live cam sul telefono.
+- Registrazioni in **Cartelle / LiveCam** (lato admin).
+
+*Slot limitati by design — non è un TikTok farm.*
+
+---
+
+## Quick start · hack the stack
 
 ```bash
-git clone <repo>
-cd xxx
+git clone https://github.com/Infinity-X202/xxxx-messenger.git
+cd xxxx-messenger
 cp .env.example .env
-```
-
-Genera `SESSION_SECRET` (almeno 32 caratteri casuali) e una password PostgreSQL robusta. Non committare `.env`.
-
-```bash
+# SESSION_SECRET ≥32 char, password DB robusta — mai nel git
 npm install
 ```
 
-## 3. Configurazione `.env`
-
-Copia `.env.example` → `.env`. Variabili principali:
-
-| Variabile | Scopo |
-| --- | --- |
-| `DATABASE_URL` | PostgreSQL |
-| `REDIS_URL` | Redis |
-| `SESSION_SECRET` | HMAC sessioni / IP hash (non per password) |
-| `APP_URL` / `CORS_ORIGIN` | Origine del frontend |
-| `CLOUDFLARE_TUNNEL_TOKEN` | Token tunnel (mai nel git) |
-| `SMTP_*` | Email verifica/reset (in dev i link vanno nei log) |
-| `BOOTSTRAP_ADMIN_EMAIL` | Se impostata, promuove a `admin` **solo** quell’email al register |
-
-Non esiste un account admin hardcoded.
-
-## 4. Avvio sviluppo
-
-Avvia Postgres e Redis (Docker) **oppure** istanze locali.
+**Sviluppo** (Postgres + Redis via Docker o locali):
 
 ```bash
 docker compose up -d postgres redis
 npm run db:generate
 npm run db:migrate
-npm run dev:server
-npm run dev:web
+npm run dev:server    # API + WS :3000
+npm run dev:web       # UI :5173
 ```
 
-Frontend: `http://localhost:5173` (proxy Vite verso API/WS su `:3000`).
+**Admin desktop (Windows):**
 
-## 5. Avvio Docker
-
-```bash
-cp .env.example .env
-# modifica secret, password DB, APP_URL, CORS_ORIGIN (es. http://localhost:8080)
-docker compose up --build
+```text
+xxxx Admin.bat
 ```
 
-UI: `http://localhost:8080`. PostgreSQL e Redis **non** sono pubblicati sull’host.
+Richiede **Node 20.11+** già installato. Il launcher orchestra DB/API/Vite/tunnel.
 
-Tunnel Cloudflare:
+**Produzione Docker:** `docker compose up --build` — vedi sezioni avanzate sotto.
 
-```bash
-docker compose --profile tunnel up --build
-```
+---
 
-Richiede `CLOUDFLARE_TUNNEL_TOKEN`.
+## Security · read before you `push --force`
 
-## 6. Database migration
+- [ ] **`.env` fuori dal repo** (già in `.gitignore`) — token tunnel, SMTP, DB solo locali
+- [ ] `SESSION_SECRET` e password DB **lunghi e unici**
+- [ ] Redis/Postgres **non** esposti su Internet
+- [ ] CORS **ristretto** all’origine reale (mai `*` in prod)
+- [ ] Codice admin solo su **macchine di fiducia**
+- [ ] Checklist completa → [`docs/security.md`](docs/security.md)
 
-```bash
-npm run db:migrate          # sviluppo
-# in container backend: prisma migrate deploy
-```
+Non committare secret. Non hardcodare token. Non fidarti del “è solo un test”.
 
-Schema: `prisma/schema.prisma`.
+---
 
-## 7. Seed database
+## Docs · deep dive
 
-```bash
-SEED_USER_PASSWORD='CorrectHorse-99!' npm run db:seed
-```
+| Doc | Contenuto |
+| --- | --- |
+| [`docs/desktop-admin.md`](docs/desktop-admin.md) | Install admin da hub / desktop |
+| [`docs/cloudflare.md`](docs/cloudflare.md) | Tunnel & DNS |
+| [`docs/backup.md`](docs/backup.md) | Backup PostgreSQL |
+| [`docs/api.md`](docs/api.md) | API versionata |
+| [`docs/e2ee.md`](docs/e2ee.md) | TLS vs E2EE |
 
-Crea `alice@example.com` e `bob@example.com` con ruolo **user**. Nessun admin.
+<details>
+<summary><strong>Stack completo (Docker, seed, test, migrate)</strong></summary>
 
-## 8. Test
+**Requisiti:** Node 20.11+, npm 10+, Docker Compose opzionale, `cloudflared` opzionale.
 
-```bash
-npm test
-```
+**Variabili `.env` principali:** `DATABASE_URL`, `REDIS_URL`, `SESSION_SECRET`, `APP_URL`, `CORS_ORIGIN`, `CLOUDFLARE_TUNNEL_TOKEN`, `SMTP_*`, `BOOTSTRAP_ADMIN_EMAIL` (promuove admin al register se impostata).
 
-I test di integrazione auth/IDOR richiedono `DATABASE_URL`, `REDIS_URL`, `SESSION_SECRET`, `APP_URL`, `CORS_ORIGIN`.
+**Docker prod:** `docker compose up --build` → UI `http://localhost:8080`. Tunnel: `docker compose --profile tunnel up --build`.
 
-## 9. Build produzione
+**Seed dev:** `SEED_USER_PASSWORD='…' npm run db:seed` → utenti demo, **nessun admin di default**.
 
-```bash
-npm run build
-docker compose up --build -d
-```
+**Test:** `npm test` (integrazione richiede env DB/Redis).
 
-In produzione: `NODE_ENV=production`, cookie `Secure`, `TRUST_PROXY=true`, CORS esplicito (mai `*`), HTTPS tramite Cloudflare.
+**Backup:** `bash scripts/backup.sh` — vedi `docs/backup.md`.
 
-## 10. Configurazione Cloudflare
+**Aggiornamenti:** backup → `git pull` → rebuild container → migrate on boot.
 
-1. Crea un dominio sul dashboard Cloudflare.
-2. SSL/TLS: **Full (strict)** quando l’origine è raggiungibile in HTTPS; con tunnel verso HTTP interno usa **Full** e termina TLS a Cloudflare.
-3. Abilita HTTPS automatico e HSTS sul dominio.
+</details>
 
-Dettagli: `docs/cloudflare.md`.
+---
 
-## 11. Configurazione `cloudflared`
-
-1. Zero Trust → Networks → Tunnels → Create.
-2. Copia il **token** in `CLOUDFLARE_TUNNEL_TOKEN` (secret manager / `.env` locale).
-3. Public hostname → servizio `http://frontend:80` (nginx fa da reverse proxy verso API/WS).
-4. Non esporre porte origin su Internet. Il tunnel entra nella rete Docker interna.
-
-Esempio locale: `infra/cloudflare/config.yml`.
-
-## 12. DNS
-
-Crea un record CNAME (o l’hostname del tunnel) verso `*.cfargotunnel.com` come indicato da Cloudflare. Non aprire `5432`/`6379` sul firewall.
-
-## 13. HTTPS
-
-Cloudflare termina TLS verso i client. L’origin dietro tunnel non deve essere HTTP pubblico. Imposta cookie `Secure` con `NODE_ENV=production`.
-
-## 14. Backup PostgreSQL
-
-Il tunnel **non** sostituisce i backup.
-
-```bash
-# Git Bash / WSL
-export POSTGRES_USER=ixm POSTGRES_DB=infinity_x BACKUP_RETENTION_DAYS=14
-bash scripts/backup.sh
-bash scripts/restore.sh backups/ixm-....sql.gz
-```
-
-Vedi `docs/backup.md`.
-
-## 15. Aggiornamenti
-
-1. Backup DB.
-2. `git pull`
-3. `docker compose build --no-cache backend frontend`
-4. `docker compose up -d`
-5. Le migrate partono all’avvio del backend (`prisma migrate deploy`).
-
-## 16. Security checklist
-
-- [ ] Nessun secret nel repository
-- [ ] `SESSION_SECRET` e password DB unici e lunghi
-- [ ] Redis e Postgres solo sulla rete Docker interna
-- [ ] CORS ristretto all’origine reale
-- [ ] SMTP configurato in produzione per verifica/reset
-- [ ] Rate limit Redis attivo
-- [ ] Backup automatici e restore provato
-- [ ] Tunnel token ruotabile
-- [ ] Nessun admin di default
-- [ ] Upload su volume dedicato, download con `Content-Disposition: attachment`
-- [ ] Review `docs/security.md`
-
-API versionata: `docs/api.md`.
-
-## Admin Panel (Infinity X)
-
-- **Hub pubblico:** [infinitydev25.netlify.app](https://infinitydev25.netlify.app) — istruzioni, link GitHub, created by **Infinity X**.
-- **App desktop Windows:** doppio clic su `xxxx Admin.bat` (o `node apps/desktop/control.mjs`). Avvia DB, API, sito e tunnel; pannello admin in iframe.
-- **Accessi:** massimo **3** utenti (oltre Adil). Ogni **nome** compare sulla live cam; elimina e aggiungi da Admin → Accessi. Dopo un nuovo accesso, l’utente deve **rifare login** per attivare la live cam sul telefono.
-- **Codice admin:** `adil` (solo dispositivi di fiducia).
+<p align="center">
+  <strong>Created by <a href="https://infinitydev25.netlify.app">Infinity X</a></strong><br/>
+  <sub>Admin Panel App · xxxx messenger · stay sharp, stay private</sub>
+</p>
