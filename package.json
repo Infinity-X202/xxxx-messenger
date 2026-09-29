@@ -1,0 +1,25 @@
+{
+  "name": "infinity-x-messenger",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Infinity X Messenger — self-hosted encrypted messaging platform",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @ixm/server & npm run dev -w @ixm/web",
+    "dev:server": "npm run dev -w @ixm/server",
+    "dev:web": "npm run dev -w @ixm/web",
+    "build": "npm run build -w @ixm/shared && npm run build -w @ixm/server && npm run build -w @ixm/web",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test -w @ixm/server",
+    "db:generate": "npm run db:generate -w @ixm/server",
+    "db:migrate": "npm run db:migrate -w @ixm/server",
+    "db:seed": "npm run db:seed -w @ixm/server",
+    "db:studio": "npm run db:studio -w @ixm/server"
+  },
+  "engines": {
+    "node": ">=20.11.0"
+  }
+}

@@ -1,0 +1,325 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  user
+  moderator
+  admin
+}
+
+enum AccountStatus {
+  active
+  disabled
+  pending_verification
+}
+
+enum ConversationType {
+  direct
+  group
+}
+
+enum MemberRole {
+  owner
+  admin
+  member
+}
+
+enum MessageType {
+  text
+  emoji
+  image
+  file
+  system
+}
+
+enum ContactStatus {
+  pending
+  accepted
+  declined
+}
+
+enum NotificationType {
+  message
+  contact_request
+  system
+  security
+}
+
+model User {
+  id              String         @id @default(cuid())
+  username        String         @unique
+  email           String         @unique
+  passwordHash    String         @map("password_hash")
+  displayName     String         @map("display_name")
+  avatarUrl       String?        @map("avatar_url")
+  bio             String?
+  status          AccountStatus  @default(pending_verification)
+  role            UserRole       @default(user)
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  lastSeen        DateTime?      @map("last_seen")
+  emailVerifiedAt DateTime?      @map("email_verified_at")
+  passwordChangedAt DateTime     @default(now()) @map("password_changed_at")
+
+  sessions             Session[]
+  devices              Device[]
+  memberships          ConversationMember[]
+  sentMessages         Message[]            @relation("MessageSender")
+  contacts             Contact[]            @relation("ContactOwner")
+  contactedBy          Contact[]            @relation("ContactTarget")
+  blockedUsers         BlockedUser[]        @relation("Blocker")
+  blockedBy            BlockedUser[]        @relation("Blocked")
+  reactions            MessageReaction[]
+  notifications        Notification[]
+  receipts             MessageReceipt[]
+  passwordResetTokens  PasswordResetToken[]
+  emailVerifyTokens    EmailVerificationToken[]
+  attachments          MessageAttachment[]  @relation("Uploader")
+  deviceFiles          DeviceFile[]
+
+  @@index([lastSeen])
+  @@map("users")
+}
+
+model Session {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  tokenHash String    @unique @map("token_hash")
+  deviceName String?  @map("device_name")
+  ipHash    String?   @map("ip_hash")
+  userAgent String?   @map("user_agent")
+  createdAt DateTime  @default(now()) @map("created_at")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  rotatedFromId String? @map("rotated_from_id")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@index([revokedAt])
+  @@map("sessions")
+}
+
+model Conversation {
+  id        String           @id @default(cuid())
+  type      ConversationType
+  title     String?
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
+  members  ConversationMember[]
+  messages Message[]
+
+  @@index([updatedAt])
+  @@map("conversations")
+}
+
+model ConversationMember {
+  conversationId     String     @map("conversation_id")
+  userId             String     @map("user_id")
+  role               MemberRole @default(member)
+  joinedAt           DateTime   @default(now()) @map("joined_at")
+  lastReadMessageId  String?    @map("last_read_message_id")
+  mutedUntil         DateTime?  @map("muted_until")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastRead     Message?     @relation("LastRead", fields: [lastReadMessageId], references: [id], onDelete: SetNull)
+
+  @@id([conversationId, userId])
+  @@index([userId])
+  @@map("conversation_members")
+}
+
+model Message {
+  id                 String      @id @default(cuid())
+  conversationId     String      @map("conversation_id")
+  senderId           String      @map("sender_id")
+  messageType        MessageType @map("message_type")
+  ciphertext         String
+  encryptionVersion  Int         @default(1) @map("encryption_version")
+  replyToMessageId   String?     @map("reply_to_message_id")
+  forwardedFromId    String?     @map("forwarded_from_id")
+  createdAt          DateTime    @default(now()) @map("created_at")
+  editedAt           DateTime?   @map("edited_at")
+  deletedAt          DateTime?   @map("deleted_at")
+
+  conversation Conversation         @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User                 @relation("MessageSender", fields: [senderId], references: [id], onDelete: Restrict)
+  replyTo      Message?             @relation("MessageReply", fields: [replyToMessageId], references: [id], onDelete: SetNull)
+  replies      Message[]            @relation("MessageReply")
+  attachments  MessageAttachment[]
+  reactions    MessageReaction[]
+  receipts     MessageReceipt[]
+  readByMembers ConversationMember[] @relation("LastRead")
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+  @@map("messages")
+}
+
+model MessageAttachment {
+  id               String   @id @default(cuid())
+  messageId        String   @map("message_id")
+  uploaderId       String   @map("uploader_id")
+  storageKey       String   @unique @map("storage_key")
+  originalFilename String   @map("original_filename")
+  mimeType         String   @map("mime_type")
+  size             Int
+  createdAt        DateTime @default(now()) @map("created_at")
+  scannedAt        DateTime? @map("scanned_at")
+  scanStatus       String    @default("pending") @map("scan_status")
+
+  message  Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  uploader User    @relation("Uploader", fields: [uploaderId], references: [id], onDelete: Restrict)
+
+  @@index([messageId])
+  @@map("message_attachments")
+}
+
+model MessageReaction {
+  id        String   @id @default(cuid())
+  messageId String   @map("message_id")
+  userId    String   @map("user_id")
+  reaction  String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, reaction])
+  @@index([messageId])
+  @@map("message_reactions")
+}
+
+model MessageReceipt {
+  messageId   String    @map("message_id")
+  userId      String    @map("user_id")
+  deliveredAt DateTime? @map("delivered_at")
+  readAt      DateTime? @map("read_at")
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([messageId, userId])
+  @@index([userId])
+  @@map("message_receipts")
+}
+
+model Contact {
+  userId        String        @map("user_id")
+  contactUserId String        @map("contact_user_id")
+  status        ContactStatus @default(pending)
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  user    User @relation("ContactOwner", fields: [userId], references: [id], onDelete: Cascade)
+  contact User @relation("ContactTarget", fields: [contactUserId], references: [id], onDelete: Cascade)
+
+  @@id([userId, contactUserId])
+  @@index([contactUserId])
+  @@map("contacts")
+}
+
+model BlockedUser {
+  userId        String   @map("user_id")
+  blockedUserId String   @map("blocked_user_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user    User @relation("Blocker", fields: [userId], references: [id], onDelete: Cascade)
+  blocked User @relation("Blocked", fields: [blockedUserId], references: [id], onDelete: Cascade)
+
+  @@id([userId, blockedUserId])
+  @@map("blocked_users")
+}
+
+model Device {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  deviceName String   @map("device_name")
+  publicKey  String   @map("public_key")
+  createdAt  DateTime @default(now()) @map("created_at")
+  lastSeen   DateTime @default(now()) @map("last_seen")
+  revokedAt  DateTime? @map("revoked_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("devices")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String           @map("user_id")
+  type      NotificationType
+  payload   Json
+  readAt    DateTime?        @map("read_at")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+model EmailVerificationToken {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_verification_tokens")
+}
+
+model AuditEvent {
+  id        String   @id @default(cuid())
+  userId    String?  @map("user_id")
+  event     String
+  ipHash    String?  @map("ip_hash")
+  userAgent String?  @map("user_agent")
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@index([event, createdAt])
+  @@map("audit_events")
+}
+
+model DeviceFile {
+  id               String   @id @default(cuid())
+  userId           String   @map("user_id")
+  storageKey       String   @unique @map("storage_key")
+  originalFilename String   @map("original_filename")
+  folderPath       String   @default("/") @map("folder_path")
+  mimeType         String   @map("mime_type")
+  size             Int
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("device_files")
+}

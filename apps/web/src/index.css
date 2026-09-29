@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root,
+  .dark {
+    --background: 330 35% 6%;
+    --foreground: 330 60% 96%;
+    --card: 330 28% 9%;
+    --card-foreground: 330 60% 96%;
+    --primary: 330 80% 58%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 330 25% 16%;
+    --secondary-foreground: 330 60% 96%;
+    --muted: 330 20% 14%;
+    --muted-foreground: 330 25% 72%;
+    --accent: 320 45% 18%;
+    --accent-foreground: 330 80% 92%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 330 30% 22%;
+    --input: 330 30% 22%;
+    --ring: 328 86% 70%;
+    --radius: 1.15rem;
+  }
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: "Sora", "Segoe UI", system-ui, sans-serif;
+    background-image:
+      radial-gradient(1200px 600px at 10% -10%, rgba(244, 63, 94, 0.22), transparent 55%),
+      radial-gradient(900px 500px at 110% 10%, rgba(192, 38, 211, 0.2), transparent 50%),
+      linear-gradient(180deg, #14030a 0%, #1a0610 40%, #0c0308 100%);
+    min-height: 100%;
+  }
+  .font-serif {
+    font-family: "Playfair Display", Georgia, serif;
+  }
+}
+
+.chat-glow {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(244, 63, 94, 0.12), transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.12), transparent 45%);
+}
+
+.hearts::before,
+.hearts::after {
+  content: "♥";
+  position: absolute;
+  color: rgba(244, 114, 182, 0.18);
+  animation: floatHeart 9s ease-in-out infinite;
+}
+.hearts::before {
+  font-size: 7rem;
+  left: 8%;
+  top: 20%;
+}
+.hearts::after {
+  font-size: 5rem;
+  right: 12%;
+  bottom: 18%;
+  animation-delay: -3s;
+}
+
+@keyframes floatHeart {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-8deg);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translateY(-18px) rotate(8deg);
+    opacity: 0.45;
+  }
+}

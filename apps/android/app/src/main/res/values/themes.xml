@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.InfinityX" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/ixm_pink</item>
+        <item name="colorOnPrimary">@color/ixm_text</item>
+        <item name="android:statusBarColor">@color/ixm_bg</item>
+        <item name="android:navigationBarColor">@color/ixm_bg</item>
+        <item name="android:windowBackground">@color/ixm_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

@@ -1,0 +1,5 @@
+# Duplicate example for the path requested in the architecture notes.
+# Copy to a secrets-backed volume; never store TUNNEL_TOKEN here.
+
+ingress:
+  - service: http://frontend:80

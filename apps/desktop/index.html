@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>xxxx admin</title>
+    <style>
+      :root { color-scheme: dark; }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body {
+        display: flex;
+        flex-direction: column;
+        font-family: "Segoe UI", sans-serif;
+        background: #12080d;
+        color: #ffe4ef;
+      }
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border-bottom: 1px solid rgba(244, 114, 182, 0.25);
+        flex-shrink: 0;
+      }
+      h1 { margin: 0; font-weight: 600; font-size: 22px; }
+      h1 span { color: #fb7185; }
+      button {
+        font: inherit;
+        cursor: pointer;
+        border-radius: 999px;
+        border: 0;
+        padding: 8px 14px;
+        background: #3f1d2e;
+        color: #ffe4ef;
+      }
+      button.primary { background: linear-gradient(90deg, #e11d48, #c026d3); color: #fff; font-weight: 600; }
+      button:disabled { opacity: 0.45; cursor: default; }
+      button.copied { background: #166534; }
+      .phase { font-size: 12px; color: #86efac; }
+      .link {
+        flex: 1;
+        min-width: 200px;
+        padding: 8px 12px;
+        border-radius: 12px;
+        background: #1c1016;
+        font-size: 12px;
+        word-break: break-all;
+      }
+      .link a { color: #86efac; }
+      .frame-wrap { flex: 1; min-height: 0; position: relative; background: #0a0508; }
+      iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        background: #0a0508;
+      }
+      .placeholder {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        text-align: center;
+        color: #f9a8d4;
+      }
+      details { width: 100%; font-size: 11px; color: #f9a8d4; }
+      pre { max-height: 100px; overflow: auto; white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <div class="toolbar">
+      <h1>xxxx <span>admin</span></h1>
+      <span class="phase" id="phase">fermo</span>
+      <button class="primary" id="start">Avvia il server</button>
+      <button id="stop">Spegni</button>
+      <div class="link" id="link">Nessun link</div>
+      <button id="copy" disabled>Copia link</button>
+      <a id="hub" href="https://infinitydev25.netlify.app" target="_blank" rel="noreferrer" style="font-size:12px;color:#f9a8d4;text-decoration:none;padding:8px 10px;border:1px solid rgba(251,113,133,.35);border-radius:999px">Hub Infinity X</a>
+      <button id="login" disabled>Login adil</button>
+    </div>
+    <div class="frame-wrap">
+      <div class="placeholder" id="placeholder">
+        <div>
+          <p><strong>Pannello completo</strong> (hack camera, cartelle, utenti, OTA, accessi)</p>
+          <p>Premi <strong>Avvia il server</strong>, poi entra con codice <strong>adil</strong> se serve.</p>
+        </div>
+      </div>
+      <iframe id="admin" hidden title="xxxx admin"></iframe>
+    </div>
+    <p style="margin:0;padding:6px 14px;font-size:11px;color:#f9a8d4">Admin Panel App · created by <strong>Infinity X</strong></p>
+    <details>
+      <summary>Log server</summary>
+      <pre id="log"></pre>
+    </details>
+    <script>
+      const phase = document.getElementById("phase");
+      const logEl = document.getElementById("log");
+      const linkEl = document.getElementById("link");
+      const copyBtn = document.getElementById("copy");
+      const loginBtn = document.getElementById("login");
+      const startBtn = document.getElementById("start");
+      const iframe = document.getElementById("admin");
+      const placeholder = document.getElementById("placeholder");
+      let tunnelUrl = "";
+      let adminLoaded = false;
+
+      copyBtn.onclick = async () => {
+        if (!tunnelUrl) return;
+        try {
+          await navigator.clipboard.writeText(tunnelUrl);
+        } catch {
+          const box = document.createElement("textarea");
+          box.value = tunnelUrl;
+          document.body.appendChild(box);
+          box.select();
+          document.execCommand("copy");
+          box.remove();
+        }
+        copyBtn.textContent = "Copiato";
+        copyBtn.classList.add("copied");
+        setTimeout(() => {
+          copyBtn.textContent = "Copia link";
+          copyBtn.classList.remove("copied");
+        }, 1600);
+      };
+
+      const webBase = "http://127.0.0.1:5173";
+
+      loginBtn.onclick = () => {
+        iframe.hidden = false;
+        placeholder.hidden = true;
+        iframe.src = `${webBase}/login`;
+      };
+
+      function showAdmin() {
+        iframe.hidden = false;
+        placeholder.hidden = true;
+        if (!adminLoaded) {
+          iframe.src = `${webBase}/app/admin`;
+          adminLoaded = true;
+        }
+      }
+
+      async function refresh() {
+        const state = await fetch("/api/state").then((r) => r.json());
+        phase.textContent = state.busy ? "avvio…" : state.phase;
+        startBtn.disabled = state.busy;
+        logEl.textContent = (state.log || []).join("\n");
+        tunnelUrl = state.tunnelUrl || "";
+        copyBtn.disabled = !tunnelUrl;
+        loginBtn.disabled = state.phase !== "online";
+        const hub = document.getElementById("hub");
+        if (tunnelUrl) {
+          linkEl.innerHTML = `<a href="${tunnelUrl}" target="_blank" rel="noreferrer">${tunnelUrl}</a>`;
+          hub.href = `https://infinitydev25.netlify.app/?tunnel=${encodeURIComponent(tunnelUrl)}`;
+        } else if (state.phase === "online") {
+          linkEl.textContent = "Sito locale attivo (tunnel in attesa…)";
+        }
+        if (state.phase === "online") showAdmin();
+        if (state.phase === "fermo" || state.phase === "errore") {
+          adminLoaded = false;
+          iframe.hidden = true;
+          iframe.removeAttribute("src");
+          placeholder.hidden = false;
+        }
+      }
+
+      document.getElementById("start").onclick = async () => {
+        await fetch("/api/start", { method: "POST" });
+        refresh();
+      };
+      document.getElementById("stop").onclick = async () => {
+        await fetch("/api/stop", { method: "POST" });
+        tunnelUrl = "";
+        linkEl.textContent = "Nessun link";
+        copyBtn.disabled = true;
+        refresh();
+      };
+      refresh();
+      setInterval(refresh, 1500);
+    </script>
+  </body>
+</html>

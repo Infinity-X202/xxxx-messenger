@@ -1,0 +1,11 @@
+# Locally-managed tunnel example.
+# Prefer a remotely managed tunnel with CLOUDFLARE_TUNNEL_TOKEN (see docker-compose.yml).
+# Do not commit credentials.json or the tunnel token.
+
+tunnel: YOUR_TUNNEL_ID
+credentials-file: /etc/cloudflared/credentials.json
+
+ingress:
+  - hostname: YOUR_HOSTNAME
+    service: http://frontend:80
+  - service: http_status:404
