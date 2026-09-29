@@ -83,12 +83,35 @@ function waitUntil(check, ms, label) {
   });
 }
 
+function loadDotEnv() {
+  const env = { ...process.env };
+  try {
+    const text = readFileSync(path.join(repo, ".env"), "utf8");
+    for (const line of text.split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const eq = trimmed.indexOf("=");
+      if (eq < 1) continue;
+      const key = trimmed.slice(0, eq).trim();
+      let value = trimmed.slice(eq + 1).trim();
+      if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+        value = value.slice(1, -1);
+      }
+      env[key] = value;
+    }
+  } catch {
+    /* optional until .env exists */
+  }
+  return env;
+}
+
 function run(cmd, args, opts = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn(cmd, args, {
       cwd: repo,
       windowsHide: true,
       shell: false,
+      env: opts.env || process.env,
       ...opts,
     });
     let out = "";
@@ -246,10 +269,12 @@ async function startPostgres() {
 async function ensureDatabaseMigrated() {
   if (existsSync(setupDoneFlag)) return;
   state.phase = "setup";
-  log("Preparing database (non-interactive)…");
+  log("Preparing database…");
   await alignDatabaseLogin();
-  await runNpm(["run", "db:generate"]);
-  await runNpm(["run", "db:migrate:deploy", "-w", "@ixm/server"]);
+  const env = loadDotEnv();
+  const prisma = path.join(repo, "node_modules", "prisma", "build", "index.js");
+  await run(node, [prisma, "generate", "--schema", "prisma/schema.prisma"], { env });
+  await run(node, [prisma, "migrate", "deploy", "--schema", "prisma/schema.prisma"], { env });
   writeFileSync(setupDoneFlag, new Date().toISOString(), "utf8");
   log("Database ready.");
 }
@@ -299,6 +324,45 @@ async function startStack() {
   try {
     state.error = "";
     await ensureFirstRunReady();
+    if ((await portOpen(3000)) && (await portOpen(5173))) {
+      try {
+        const health = await fetch("http://127.0.0.1:3000/health");
+        if (health.ok) {
+          log("Server already running.");
+          state.phase = "online";
+          state.error = "";
+          if (!state.tunnelUrl) {
+            const tunnelBin = await ensureCloudflared();
+            const tunnel = track(
+              spawn(tunnelBin, ["tunnel", "--url", "http://127.0.0.1:5173", "--protocol", "http2"], {
+                cwd: repo,
+                windowsHide: true,
+              }),
+            );
+            state.tunnelUrl = await new Promise((resolve, reject) => {
+              const timer = setTimeout(() => reject(new Error("Cloudflare did not return a link")), 45000);
+              const onData = (buf) => {
+                const found = buf.toString().match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/i);
+                if (found) {
+                  clearTimeout(timer);
+                  resolve(found[0]);
+                }
+              };
+              tunnel.stdout?.on("data", onData);
+              tunnel.stderr?.on("data", onData);
+              tunnel.on("exit", () => {
+                clearTimeout(timer);
+                reject(new Error("Cloudflare exited"));
+              });
+            });
+          }
+          log(`Link ready: ${state.tunnelUrl}`);
+          return;
+        }
+      } catch {
+        /* start fresh below */
+      }
+    }
     log("Starting Postgres…");
     await startPostgres();
     await waitUntil(() => portOpen(5432), 35000, "Postgres is not responding. Install WSL + PostgreSQL, then press Start server again.");
@@ -520,4 +584,5 @@ server.on("error", (err) => {
 server.listen(PORT, "127.0.0.1", () => {
   log("xxxx admin panel open.");
   openWindow();
+  void startStack();
 });
