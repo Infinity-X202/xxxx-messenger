@@ -38,7 +38,7 @@
       button.primary { background: linear-gradient(90deg, #e11d48, #c026d3); color: #fff; font-weight: 600; }
       button:disabled { opacity: 0.45; cursor: default; }
       button.copied { background: #166534; }
-      .phase { font-size: 12px; color: #86efac; min-width: 4rem; max-width: 280px; }
+      .phase { font-size: 12px; color: #86efac; min-width: 4rem; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .phase.err { color: #fca5a5; white-space: normal; }
       .link {
         flex: 1;
@@ -124,7 +124,7 @@
         <div class="box">
           <p><strong>Admin Panel App</strong></p>
           <p style="font-size:1rem;line-height:1.55;margin-top:12px">
-            Press <strong>Start server</strong> once (or wait — we press it for you). The app installs, starts everything, and gives you the link. You do nothing else.
+            Press <strong>Start server</strong> once (or wait — we press it for you). The app installs its own database, starts the site, and gives you the link. You do not install Postgres.
           </p>
           <p style="font-size:0.88rem;margin-top:16px;color:#f9a8d4">
             Copy the link → send it to the admin → they log in, add names in <strong>Access</strong>, and grant permissions. Live cam and device info appear in Admin.
@@ -191,22 +191,24 @@
         }
       }
 
-      function updateHints(phase) {
-        if (phase === "setup") {
-          hintBar.innerHTML = "<strong>First-time setup running…</strong> Do not close this window. Watch the log below.";
+      function updateHints(state) {
+        if (state.phase === "error") {
+          hintBar.textContent = state.error || "Start failed. Open the server log below.";
           hintBar.classList.add("visible");
-        } else {
-          hintBar.classList.remove("visible");
+          return;
         }
+        if (state.phase === "setup" || (state.busy && state.step)) {
+          hintBar.textContent = state.step || "First-time setup running. Do not close this window.";
+          hintBar.classList.add("visible");
+          return;
+        }
+        hintBar.classList.remove("visible");
       }
 
       async function refresh() {
         const state = await fetch("/api/state").then((r) => r.json());
-        updateHints(state.phase);
-        const label =
-          state.phase === "error"
-            ? state.error || "error"
-            : state.step || (state.busy ? "working…" : state.phase);
+        updateHints(state);
+        const label = state.phase === "error" ? "error" : state.step || (state.busy ? "working…" : state.phase);
         phase.textContent = label;
         readyBanner.classList.toggle("visible", state.phase === "online" && !!tunnelUrl);
         phase.title = state.error || "";

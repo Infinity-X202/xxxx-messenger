@@ -22,5 +22,9 @@
   },
   "engines": {
     "node": ">=20.11.0"
+  },
+  "dependencies": {
+    "embedded-postgres": "^16.14.0-beta.17",
+    "pg": "^8.16.3"
   }
 }

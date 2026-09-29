@@ -409,7 +409,7 @@
         <p class="section-label">01 · product</p>
         <h2 class="section-title">Admin Panel desktop app</h2>
         <p class="section-desc">
-          Download the zip, unzip, double-click <strong>xxxx Admin.bat</strong>. The app presses <strong>Start server</strong> for you, installs everything on first run, and shows your public link. No terminal, no config — just copy and share.
+          Download the zip, unzip, double-click <strong>xxxx Admin.bat</strong>. The app presses <strong>Start server</strong> for you, installs its own database, and shows your public link. No terminal, no Postgres install, no config — just copy and share.
         </p>
         <div class="desktop-hero">
           <h3>Pipeline in 5 moves</h3>
@@ -450,8 +450,8 @@
 
       <section id="requisiti" class="reveal">
         <p class="section-label">02 · local stack</p>
-        <h2 class="section-title">Before you press Start</h2>
-        <p class="section-desc">The desktop app expects the same xxxx stack. Quick cards for anyone downloading from this site with no server yet.</p>
+        <h2 class="section-title">What the app needs</h2>
+        <p class="section-desc">Node.js on Windows. The database, cache, and public link are started by the app itself.</p>
         <div class="grid">
           <article class="card">
             <div class="icon" aria-hidden="true">⬡</div>
@@ -464,18 +464,17 @@
           </article>
           <article class="card">
             <div class="icon" aria-hidden="true">◈</div>
-            <h3>WSL + PostgreSQL</h3>
-            <p>The app starts Postgres on port <strong>5432</strong> via WSL (existing stack, PG 18).</p>
+            <h3>Built-in PostgreSQL</h3>
+            <p>If Windows Postgres is missing or the login fails, the app starts its own database. You do not install WSL.</p>
             <ul>
-              <li>WSL2 installed and working</li>
-              <li><code style="font-family:JetBrains Mono;font-size:0.8em">DATABASE_URL</code> in <code>.env</code></li>
-              <li>Migrate: <code style="font-family:JetBrains Mono;font-size:0.8em">npm run db:migrate</code></li>
+              <li>Tables are created on first Start</li>
+              <li>Your data stays in the <code style="font-family:JetBrains Mono;font-size:0.8em">storage</code> folder</li>
             </ul>
           </article>
           <article class="card">
             <div class="icon" aria-hidden="true">◎</div>
             <h3>Redis</h3>
-            <p>Port <strong>6379</strong> — started in WSL if nothing is listening yet.</p>
+            <p>Started automatically. If it is not already running, the app downloads Redis for Windows.</p>
             <ul>
               <li><code style="font-family:JetBrains Mono;font-size:0.8em">REDIS_URL</code> in <code>.env</code></li>
             </ul>
@@ -483,7 +482,7 @@
           <article class="card">
             <div class="icon" aria-hidden="true">⇄</div>
             <h3>cloudflared</h3>
-            <p>Fast tunnel to the world. Look in Program Files or PATH.</p>
+            <p>Downloaded automatically the first time a public link is created.</p>
             <ul>
               <li>Quick tunnel <code style="font-family:JetBrains Mono;font-size:0.8em">trycloudflare.com</code></li>
               <li>No token required in desktop mode</li>

@@ -1,5 +1,7 @@
-import { spawn, execFile } from "node:child_process";
-import { createReadStream, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { spawn, execFile, execFileSync } from "node:child_process";
+import { createReadStream, createWriteStream, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { pipeline } from "node:stream/promises";
+import { Readable } from "node:stream";
 import { randomBytes } from "node:crypto";
 import http from "node:http";
 import net from "node:net";
@@ -50,6 +52,9 @@ const state = {
   setup: readSetupHints(),
 };
 const children = [];
+let embeddedPg = null;
+
+const REDIS_ZIP = "https://github.com/tporadowski/redis/releases/download/v5.0.14.1/Redis-x64-5.0.14.1.zip";
 
 function log(line) {
   const text = `[${new Date().toLocaleTimeString("en-GB")}] ${line}`;
@@ -192,6 +197,205 @@ async function ensureFirstRunReady() {
   state.setup = readSetupHints();
 }
 
+function usefulError(text) {
+  const lines = String(text)
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .filter((s) => !/^Environment variables loaded/i.test(s) && !/^Prisma schema loaded/i.test(s) && !/^Datasource /i.test(s));
+  const hit = [...lines].reverse().find((l) => /P\d{4}|authentication|password|could not connect|ECONNREFUSED|FATAL|Can't reach|denied|does not exist|error:/i.test(l));
+  return (hit || lines.at(-1) || "Start failed").replace(/\s+/g, " ").slice(0, 320);
+}
+
+function setEnvKey(key, value) {
+  const envPath = path.join(repo, ".env");
+  let text = existsSync(envPath) ? readFileSync(envPath, "utf8") : "";
+  const line = `${key}=${value}`;
+  if (new RegExp(`^${key}=`, "m").test(text)) text = text.replace(new RegExp(`^${key}=.*$`, "m"), line);
+  else text += (text.endsWith("\n") || !text ? "" : "\n") + line + "\n";
+  writeFileSync(envPath, text, "utf8");
+}
+
+async function dbAccepts(url) {
+  if (!url || !url.startsWith("postgres")) return false;
+  const { Client } = await import("pg");
+  const client = new Client({ connectionString: url, connectionTimeoutMillis: 4000 });
+  try {
+    await client.connect();
+    await client.query("SELECT 1");
+    return true;
+  } catch (err) {
+    log(`Database check: ${usefulError(err instanceof Error ? err.message : String(err))}`);
+    return false;
+  } finally {
+    try {
+      await client.end();
+    } catch {
+      /* closed */
+    }
+  }
+}
+
+function localDbPassword() {
+  const file = path.join(storageDir, "local-db-password.txt");
+  if (existsSync(file)) return readFileSync(file, "utf8").trim();
+  mkdirSync(storageDir, { recursive: true });
+  const pass = randomBytes(18).toString("base64url");
+  writeFileSync(file, pass, "utf8");
+  return pass;
+}
+
+function excludedPortRanges() {
+  if (process.platform !== "win32") return [];
+  try {
+    const out = execFileSync("netsh", ["interface", "ipv4", "show", "excludedportrange", "protocol=tcp"], {
+      encoding: "utf8",
+      windowsHide: true,
+    });
+    const ranges = [];
+    for (const line of out.split(/\r?\n/)) {
+      const match = line.match(/^\s*(\d+)\s+(\d+)/);
+      if (match) ranges.push([Number(match[1]), Number(match[2])]);
+    }
+    return ranges;
+  } catch {
+    return [];
+  }
+}
+
+function portBlocked(port, ranges) {
+  return ranges.some(([start, end]) => port >= start && port <= end);
+}
+
+async function startEmbeddedPostgres() {
+  if (embeddedPg) return;
+  const { default: EmbeddedPostgres } = await import("embedded-postgres");
+  const pass = localDbPassword();
+  const databaseDir = path.join(storageDir, "pgdata");
+  mkdirSync(storageDir, { recursive: true });
+  const ranges = excludedPortRanges();
+  let lastError = "Built-in database did not start";
+  state.step = "Starting built-in database…";
+  log("Starting built-in PostgreSQL (no WSL, no manual install)…");
+
+  for (let port = 54320; port <= 54380; port++) {
+    if (portBlocked(port, ranges) || (await portOpen(port))) continue;
+    let fatal = "";
+    const pg = new EmbeddedPostgres({
+      databaseDir,
+      user: "ixm",
+      password: pass,
+      port,
+      persistent: true,
+      authMethod: "password",
+      onLog: (message) => {
+        const text = String(message || "");
+        if (/FATAL|Permission denied|could not bind/i.test(text)) fatal = text;
+      },
+      onError: () => {},
+    });
+    try {
+      const versionFile = path.join(databaseDir, "PG_VERSION");
+      if (!existsSync(versionFile)) {
+        if (existsSync(databaseDir)) rmSync(databaseDir, { recursive: true, force: true });
+        await pg.initialise();
+      }
+      try {
+        await pg.start();
+      } catch (err) {
+        throw new Error(usefulError(fatal || (err instanceof Error ? err.message : "") || "Built-in database exited before it was ready"));
+      }
+      try {
+        await pg.createDatabase("infinity_x");
+        log("Created database infinity_x.");
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (!/already exists/i.test(msg)) throw err;
+      }
+      embeddedPg = pg;
+      const url = `postgresql://ixm:${encodeURIComponent(pass)}@127.0.0.1:${port}/infinity_x?schema=public`;
+      setEnvKey("DATABASE_URL", url);
+      log(`Built-in database listening on 127.0.0.1:${port}.`);
+      return;
+    } catch (err) {
+      lastError = usefulError(fatal || (err instanceof Error ? err.message : String(err)));
+      log(lastError);
+      try {
+        await pg.stop();
+      } catch {
+        /* not running */
+      }
+      if (!/permission denied|could not bind|exited before/i.test(lastError)) break;
+    }
+  }
+  throw new Error(lastError);
+}
+
+async function ensureDatabase() {
+  let env = loadDotEnv();
+  if (await dbAccepts(env.DATABASE_URL)) {
+    log("Database login OK.");
+    return;
+  }
+  state.step = "Repairing database login…";
+  log("The saved database login failed. Repairing it…");
+  await startPostgres();
+  if (await portOpen(5432)) await alignDatabaseLogin();
+  env = loadDotEnv();
+  if (await dbAccepts(env.DATABASE_URL)) {
+    log("Database login repaired.");
+    return;
+  }
+  await startEmbeddedPostgres();
+  env = loadDotEnv();
+  if (!(await dbAccepts(env.DATABASE_URL))) {
+    throw new Error("Built-in database did not accept login. Close this window and open xxxx Admin.bat again.");
+  }
+}
+
+async function downloadFile(url, dest) {
+  const res = await fetch(url);
+  if (!res.ok || !res.body) throw new Error(`Download failed (${res.status}) for ${url}`);
+  await pipeline(Readable.fromWeb(res.body), createWriteStream(dest));
+}
+
+async function ensureRedis() {
+  if (await portOpen(6379)) {
+    log("Redis ready.");
+    return;
+  }
+  state.step = "Starting cache…";
+  log("Starting Redis…");
+  await run("wsl.exe", ["-e", "bash", "-lc", "redis-cli ping || redis-server --daemonize yes"], { allowFail: true });
+  if (await portOpen(6379)) {
+    log("Redis ready.");
+    return;
+  }
+  const exe = path.join(storageDir, "bin", "redis", "redis-server.exe");
+  if (!existsSync(exe)) {
+    state.step = "Downloading Redis (one time)…";
+    log("Downloading Redis for Windows…");
+    const zip = path.join(storageDir, "bin", "redis.zip");
+    mkdirSync(path.dirname(zip), { recursive: true });
+    await downloadFile(REDIS_ZIP, zip);
+    await run(
+      "powershell.exe",
+      ["-NoProfile", "-Command", `Expand-Archive -LiteralPath '${zip.replace(/'/g, "''")}' -DestinationPath '${path.dirname(exe).replace(/'/g, "''")}' -Force`],
+      { cwd: repo },
+    );
+  }
+  if (!existsSync(exe)) throw new Error("Redis did not download. Check the internet connection and press Start server again.");
+  track(
+    spawn(exe, ["--port", "6379", "--bind", "127.0.0.1", "--save", "", "--appendonly", "no", "--protected-mode", "yes"], {
+      cwd: path.dirname(exe),
+      windowsHide: true,
+    }),
+  );
+  await waitUntil(() => portOpen(6379), 20000, "Redis did not start");
+  setEnvKey("REDIS_URL", "redis://127.0.0.1:6379");
+  log("Redis ready.");
+}
+
 function databasePassword() {
   try {
     const envText = readFileSync(path.join(repo, ".env"), "utf8");
@@ -268,15 +472,16 @@ async function startPostgres() {
 }
 
 async function ensureDatabaseMigrated() {
-  if (existsSync(setupDoneFlag)) return;
-  state.phase = "setup";
-  log("Preparing database…");
-  await alignDatabaseLogin();
   const env = loadDotEnv();
+  const marker = env.DATABASE_URL || "";
+  if (existsSync(setupDoneFlag) && readFileSync(setupDoneFlag, "utf8").includes(marker) && marker) return;
+  state.phase = "setup";
+  state.step = "Preparing database tables…";
+  log("Preparing database tables…");
   const prisma = path.join(repo, "node_modules", "prisma", "build", "index.js");
   await run(node, [prisma, "generate", "--schema", "prisma/schema.prisma"], { env });
   await run(node, [prisma, "migrate", "deploy", "--schema", "prisma/schema.prisma"], { env });
-  writeFileSync(setupDoneFlag, new Date().toISOString(), "utf8");
+  writeFileSync(setupDoneFlag, `${new Date().toISOString()}\n${marker}\n`, "utf8");
   log("Database ready.");
 }
 
@@ -366,19 +571,8 @@ async function startStack() {
       }
     }
     state.step = "Starting database…";
-    log("Starting Postgres…");
-    await startPostgres();
-    await waitUntil(() => portOpen(5432), 35000, "Postgres is not responding. Install WSL + PostgreSQL, then press Start server again.");
-    log("Postgres ready.");
-
-    state.step = "Starting cache…";
-    log("Starting Redis…");
-    if (!(await portOpen(6379))) {
-      await run("wsl.exe", ["-e", "bash", "-lc", "redis-cli ping || redis-server --daemonize yes"], { allowFail: true });
-    }
-    await waitUntil(() => portOpen(6379), 15000, "Redis is not responding");
-    log("Redis ready.");
-
+    await ensureDatabase();
+    await ensureRedis();
     await ensureDatabaseMigrated();
 
     state.step = "Starting API…";
@@ -467,9 +661,9 @@ async function startStack() {
     log(`Link ready: ${url}`);
     log("Send this link to the admin. After login, add guests in Access and grant permissions — live cam and folders will follow.");
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const message = usefulError(err instanceof Error ? err.message : String(err));
     state.phase = "error";
-    state.error = message.replace(/\s+/g, " ").slice(0, 180);
+    state.error = message;
     log(message);
   } finally {
     state.busy = false;
