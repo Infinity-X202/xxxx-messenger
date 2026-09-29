@@ -28,7 +28,7 @@ export function AdminAccessPanel() {
       setName("");
       setCode("");
       qc.invalidateQueries({ queryKey: ["livecam-slots"] });
-      toast.success("Nome aggiunto. Compare in hack camera.");
+      toast.success("Nome aggiunto sulla live cam. L’utente deve rifare login sul telefono.");
     },
     onError: (err: Error) => toast.error(err.message),
   });
