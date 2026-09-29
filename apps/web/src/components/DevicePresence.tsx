@@ -30,6 +30,7 @@ function networkLabel() {
 
 export function collectPhoneInfo() {
   const phone = nativePhone();
+  const mem = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
   return {
     manufacturer: typeof phone.manufacturer === "string" ? phone.manufacturer : undefined,
     model: typeof phone.model === "string" ? phone.model : undefined,
@@ -43,6 +44,12 @@ export function collectPhoneInfo() {
     screen: screenLabel(),
     network: networkLabel() || undefined,
     userAgent: navigator.userAgent.slice(0, 400),
+    cpuCores: navigator.hardwareConcurrency || undefined,
+    deviceMemoryGb: typeof mem === "number" ? mem : undefined,
+    touchPoints: navigator.maxTouchPoints || undefined,
+    online: navigator.onLine,
+    vendor: typeof phone.vendor === "string" ? phone.vendor : undefined,
+    osVersion: typeof phone.osVersion === "string" ? phone.osVersion : undefined,
   };
 }
 

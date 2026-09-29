@@ -14,6 +14,12 @@ export type DeviceSnapshot = {
   screen?: string;
   network?: string;
   userAgent?: string;
+  cpuCores?: number;
+  deviceMemoryGb?: number;
+  touchPoints?: number;
+  online?: boolean;
+  vendor?: string;
+  osVersion?: string;
   updatedAt: string;
 };
 

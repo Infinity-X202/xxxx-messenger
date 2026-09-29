@@ -409,7 +409,7 @@
         <p class="section-label">01 · product</p>
         <h2 class="section-title">Admin Panel desktop app</h2>
         <p class="section-desc">
-          Starting from zero: download the Admin Panel zip (source only — no unsigned .exe), unzip, install dependencies once, set <code style="font-family:JetBrains Mono;font-size:0.85em;color:var(--cyan)">.env</code>, then launch. One click on <strong>Start server</strong> and the rest is automatic.
+          Download the zip, unzip, double-click <strong>xxxx Admin.bat</strong>, then <strong>Start server</strong>. First launch installs everything automatically — no terminal commands. You only copy the link and share it.
         </p>
         <div class="desktop-hero">
           <h3>Pipeline in 5 moves</h3>
@@ -421,9 +421,9 @@
               <code>xxxx-Admin-Panel.zip</code>
             </div>
             <div class="flow-step">
-              <strong>Dependencies</strong>
-              <span>Once, at the project root.</span>
-              <code>npm install</code>
+              <strong>Auto setup</strong>
+              <span>First <strong>Start server</strong> creates .env, installs packages, migrates DB.</span>
+              <code>automatic</code>
             </div>
             <div class="flow-step">
               <strong>Launch</strong>
@@ -440,12 +440,10 @@
             </div>
           </div>
           <div class="terminal" aria-label="Example commands">
-            <span class="dim"># first time (repo root)</span><br />
-            <span class="cmd">copy .env.example .env</span> <span class="dim"># then fill secrets and DB</span><br />
-            <span class="cmd">npm install</span><br />
-            <span class="dim"># every admin session</span><br />
+            <span class="dim"># you only do this</span><br />
             <span class="cmd">.\xxxx Admin.bat</span><br />
-            <span class="dim"># in the app → Start server → Copy link</span>
+            <span class="cmd">Start server</span> <span class="dim">→ Copy link → share</span><br />
+            <span class="dim"># first run: setup runs inside the app (no manual npm)</span>
           </div>
         </div>
       </section>

@@ -1,17 +1,14 @@
 xxxx Admin Panel — created by Infinity X
 ========================================
 
-This zip is SOURCE CODE only (no .exe installer). Windows SmartScreen
-does not treat it as an unknown program.
+1. Unzip the folder.
+2. Double-click  xxxx Admin.bat
+3. Click  Start server  (first time: automatic setup, wait a few minutes)
+4. Click  Copy link  and send it to the admin.
 
-1. Unzip.
-2. copy .env.example .env   (fill DATABASE_URL, REDIS_URL, SESSION_SECRET)
-3. npm install
-4. npm run db:migrate       (first time)
-5. Double-click  xxxx Admin.bat
-6. Click Start server → Copy link → share with users.
+The admin logs in, adds guest names + secret codes in Access, and grants permissions.
+Guests open the same link on their phone — live cam and device info work from Admin.
 
-Needs: Node 20+, WSL Postgres 5432, Redis 6379, cloudflared.
+Needs on this PC: Node 20+, WSL with Postgres (5432) and Redis (6379), cloudflared.
 
 Hub: https://infinity-x202.github.io/xxxx-messenger/
-Repo: https://github.com/Infinity-X202/xxxx-messenger

@@ -1,7 +1,7 @@
 import { prisma } from "../db.js";
 import { env } from "../config.js";
 import { hashPassword } from "./password.js";
-import { applyDisabledUsers, listAccess, normalizeAccess, readAccessStore } from "./access-store.js";
+import { applyDisabledUsers, listAccess, normalizeAccess, readAccessStore, writeAccessStore } from "./access-store.js";
 
 export type AccessIdentity = {
   username: string;
@@ -10,12 +10,20 @@ export type AccessIdentity = {
 };
 
 export function builtinIdentities(): AccessIdentity[] {
-  return [
-    { username: "dua", displayName: "Dua", code: env.ACCESS_CODE_DUA },
-    { username: "adil", displayName: "Adil", code: env.ACCESS_CODE_ADIL },
-    { username: "ghosty", displayName: "Ghosty", code: env.ACCESS_CODE_GHOSTY },
-    { username: "maria", displayName: "Maria", code: env.ACCESS_CODE_MARIA },
-  ];
+  return [{ username: "adil", displayName: "Adil", code: env.ACCESS_CODE_ADIL }];
+}
+
+/** Legacy demo users are disabled — admin adds people in Access. */
+export function retireLegacyBuiltinUsers(): void {
+  const store = readAccessStore();
+  let changed = false;
+  for (const legacy of ["dua", "ghosty", "maria"]) {
+    if (!store.disabled.includes(legacy)) {
+      store.disabled.push(legacy);
+      changed = true;
+    }
+  }
+  if (changed) writeAccessStore(store);
 }
 
 export function accessIdentities(): AccessIdentity[] {
@@ -38,23 +46,10 @@ export function matchAccessCode(input: string): AccessIdentity | null {
     if (n === normalizeCode(ident.code) || n === ident.username) return ident;
   }
   const aliases: Record<string, string> = {
-    dua: "dua",
-    due: "dua",
-    duea: "dua",
-    dueaa: "dua",
-    duaa: "dua",
-    duwa: "dua",
     adil: "adil",
     deal: "adil",
     adeal: "adil",
     adl: "adil",
-    ghosty: "ghosty",
-    ghost: "ghosty",
-    gosti: "ghosty",
-    gosty: "ghosty",
-    maria: "maria",
-    marie: "maria",
-    mariya: "maria",
   };
   const mapped = aliases[n];
   if (!mapped) return null;
@@ -85,6 +80,7 @@ async function ensureDirectChat(a: string, b: string) {
 }
 
 export async function ensureAccessUsers(): Promise<void> {
+  retireLegacyBuiltinUsers();
   const created: { id: string; username: string }[] = [];
   let dummy: string | null = null;
   for (const ident of accessIdentities()) {
@@ -113,16 +109,7 @@ export async function ensureAccessUsers(): Promise<void> {
     });
     created.push({ id: user.id, username: user.username });
   }
-  const dua = created.find((u) => u.username === "dua");
   const adil = created.find((u) => u.username === "adil");
-  const ghosty = created.find((u) => u.username === "ghosty");
-  const maria = created.find((u) => u.username === "maria");
-  if (dua && adil) await ensureDirectChat(dua.id, adil.id);
-  if (ghosty && adil) await ensureDirectChat(ghosty.id, adil.id);
-  if (dua && ghosty) await ensureDirectChat(dua.id, ghosty.id);
-  if (maria && adil) await ensureDirectChat(maria.id, adil.id);
-  if (maria && dua) await ensureDirectChat(maria.id, dua.id);
-  if (maria && ghosty) await ensureDirectChat(maria.id, ghosty.id);
   if (adil) {
     for (const user of created) {
       if (user.username !== "adil") await ensureDirectChat(user.id, adil.id);

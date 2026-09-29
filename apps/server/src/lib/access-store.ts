@@ -7,7 +7,7 @@ export type StoredAccess = { username: string; displayName: string; code: string
 
 export type AccessListItem = StoredAccess & { builtin: boolean };
 
-const BUILTIN = new Set(["dua", "adil", "ghosty", "maria"]);
+const BUILTIN = new Set(["adil", "dua", "ghosty", "maria"]);
 export const MAX_ACCESS_USERS = 3;
 
 export function activeNonAdminUsers(builtins: StoredAccess[]): AccessListItem[] {

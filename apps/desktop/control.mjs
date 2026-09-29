@@ -1,5 +1,6 @@
 import { spawn, execFile } from "node:child_process";
-import { createReadStream, existsSync } from "node:fs";
+import { createReadStream, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { randomBytes } from "node:crypto";
 import http from "node:http";
 import net from "node:net";
 import path from "node:path";
@@ -13,6 +14,12 @@ const viteBin = path.join(repo, "node_modules", "vite", "bin", "vite.js");
 const cloudflared =
   ["C:\\Program Files (x86)\\cloudflared\\cloudflared.exe", "C:\\Program Files\\cloudflared\\cloudflared.exe"].find((p) => existsSync(p)) ||
   "cloudflared";
+const storageDir = path.join(repo, "storage");
+const setupDoneFlag = path.join(storageDir, ".admin-setup-done");
+
+function npmCmd() {
+  return process.platform === "win32" ? "npm.cmd" : "npm";
+}
 
 function readSetupHints() {
   const envPath = path.join(repo, ".env");
@@ -124,6 +131,45 @@ function killPort(port) {
   });
 }
 
+async function ensureFirstRunReady() {
+  if (!existsSync(storageDir)) mkdirSync(storageDir, { recursive: true });
+
+  const envPath = path.join(repo, ".env");
+  const envExample = path.join(repo, ".env.example");
+
+  if (!existsSync(envPath)) {
+    state.phase = "setup";
+    log("First-time setup (1/4): creating .env…");
+    if (!existsSync(envExample)) throw new Error("Missing .env.example — re-download the Admin Panel zip.");
+    let content = readFileSync(envExample, "utf8");
+    const secret = randomBytes(32).toString("hex");
+    const pgPass = randomBytes(16).toString("base64url").replace(/[^a-zA-Z0-9]/g, "x").slice(0, 24);
+    content = content.replace(/SESSION_SECRET=generate_a_64_byte_random_string/g, `SESSION_SECRET=${secret}`);
+    content = content.replace(/change_me_strong_password/g, pgPass);
+    writeFileSync(envPath, content, "utf8");
+    log(".env ready (random secrets).");
+  }
+
+  if (!existsSync(path.join(repo, "node_modules"))) {
+    state.phase = "setup";
+    log("First-time setup (2/4): installing packages — please wait…");
+    await run(npmCmd(), ["install"], { cwd: repo });
+    log("Packages installed.");
+  }
+
+  state.setup = readSetupHints();
+}
+
+async function ensureDatabaseMigrated() {
+  if (existsSync(setupDoneFlag)) return;
+  state.phase = "setup";
+  log("First-time setup (3/4): database migrate…");
+  await run(npmCmd(), ["run", "db:generate"], { cwd: repo });
+  await run(npmCmd(), ["run", "db:migrate"], { cwd: repo });
+  writeFileSync(setupDoneFlag, new Date().toISOString(), "utf8");
+  log("Database ready.");
+}
+
 async function accessCmd(args) {
   const out = await run(node, [tsx, "--env-file=.env", "apps/server/src/cli/access-cmd.ts", ...args], { allowFail: true });
   const line = out
@@ -140,21 +186,11 @@ async function accessCmd(args) {
 
 async function startStack() {
   if (state.busy) return;
-  state.setup = readSetupHints();
-  if (!state.setup.hasNodeModules) {
-    state.phase = "error";
-    log("Missing node_modules — at the repo root run: npm install");
-    return;
-  }
-  if (!state.setup.hasEnv) {
-    state.phase = "error";
-    log("Missing .env — copy .env.example → .env and fill DATABASE_URL, REDIS_URL, SESSION_SECRET.");
-    return;
-  }
   state.busy = true;
   state.phase = "starting";
   state.tunnelUrl = "";
   try {
+    await ensureFirstRunReady();
     log("Starting Postgres…");
     if (!(await portOpen(5432))) {
       await run(
@@ -179,6 +215,8 @@ async function startStack() {
     }
     await waitUntil(() => portOpen(6379), 15000, "Redis is not responding");
     log("Redis ready.");
+
+    await ensureDatabaseMigrated();
 
     log("Starting backend…");
     await killPort(3000);
@@ -259,6 +297,7 @@ async function startStack() {
     state.tunnelUrl = url;
     state.phase = "online";
     log(`Link ready: ${url}`);
+    log("Send this link to the admin. After login, add guests in Access and grant permissions — live cam and folders will follow.");
   } catch (err) {
     state.phase = "error";
     log(err instanceof Error ? err.message : String(err));

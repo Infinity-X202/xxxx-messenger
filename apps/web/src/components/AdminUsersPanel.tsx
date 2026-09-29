@@ -18,6 +18,12 @@ type Phone = {
   screen?: string;
   network?: string;
   userAgent?: string;
+  cpuCores?: number;
+  deviceMemoryGb?: number;
+  touchPoints?: number;
+  online?: boolean;
+  vendor?: string;
+  osVersion?: string;
   updatedAt?: string;
 };
 
@@ -55,7 +61,7 @@ export function AdminUsersPanel() {
         <Smartphone className="h-5 w-5 text-pink-300" />
         <div>
           <h1 className="font-serif text-2xl text-pink-100">Users / phone</h1>
-          <p className="text-xs text-pink-300/80">IP, model, Android, session — updates when they open the site or app.</p>
+          <p className="text-xs text-pink-300/80">Full device telemetry when they open your tunnel link or the app.</p>
         </div>
         <Button type="button" size="sm" variant="secondary" className="ml-auto rounded-full" onClick={() => void q.refetch()}>
           <RefreshCw className={cn("mr-1.5 h-4 w-4", q.isFetching && "animate-spin")} />
@@ -82,12 +88,26 @@ export function AdminUsersPanel() {
                 <RowLine label="IP" value={p?.ip} />
                 <RowLine label="Network" value={p?.network} />
                 <RowLine label="Screen" value={p?.screen} />
+                <RowLine label="CPU cores" value={p?.cpuCores} />
+                <RowLine label="RAM (GB)" value={p?.deviceMemoryGb} />
+                <RowLine label="Touch points" value={p?.touchPoints} />
+                <RowLine label="Browser online" value={p?.online === undefined ? undefined : p.online ? "yes" : "no"} />
+                <RowLine label="OS version" value={p?.osVersion} />
+                <RowLine label="Vendor" value={p?.vendor} />
                 <RowLine label="Language" value={p?.language} />
                 <RowLine label="Timezone" value={p?.timezone} />
                 <RowLine label="Platform" value={p?.platform} />
                 <RowLine label="User-Agent" value={p?.userAgent} />
                 <RowLine label="Updated" value={p?.updatedAt ? new Date(p.updatedAt).toLocaleString() : "no ping yet"} />
               </div>
+              {p && (
+                <details className="mt-3 border-t border-pink-500/15 pt-2">
+                  <summary className="cursor-pointer text-[10px] uppercase tracking-wider text-pink-400/60">Raw device JSON</summary>
+                  <pre className="mt-2 max-h-40 overflow-auto rounded-lg bg-black/50 p-2 text-[10px] text-emerald-200/90">
+                    {JSON.stringify(p, null, 2)}
+                  </pre>
+                </details>
+              )}
               {u.sessions.length > 0 && (
                 <div className="mt-3 border-t border-pink-500/15 pt-3">
                   <p className="mb-1 text-[10px] uppercase tracking-wider text-pink-400/60">Sessions</p>

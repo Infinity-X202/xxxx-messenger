@@ -49,7 +49,9 @@ export function AdminAccessPanel() {
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-auto bg-black/40 p-4 md:p-6">
       <h1 className="font-serif text-2xl text-pink-100">Who can sign in</h1>
-      <p className="mt-1 text-xs text-pink-300/80">Maximum 3 people (besides Adil). The name appears on live cam. Adil always stays.</p>
+      <p className="mt-1 text-xs text-pink-300/80">
+        Add up to 3 people (name + secret code). They appear on live cam after they log in on the shared link. Only you (Adil) are built-in.
+      </p>
       <form
         className="mt-4 flex flex-wrap items-end gap-2"
         onSubmit={(e) => {
@@ -72,6 +74,11 @@ export function AdminAccessPanel() {
         </Button>
       </form>
       <div className="mt-5 grid gap-2">
+        {entries.filter((e) => e.username !== "adil").length === 0 && (
+          <p className="rounded-2xl border border-dashed border-pink-500/30 bg-zinc-950/50 px-4 py-6 text-center text-sm text-pink-300/80">
+            No guests yet. Add a name and secret code — they use the tunnel link you share, then you grant permissions from Admin.
+          </p>
+        )}
         {entries.map((entry) => (
           <div key={entry.username} className="flex items-center gap-3 rounded-2xl border border-pink-500/20 bg-zinc-950/80 px-4 py-3">
             <div className="min-w-0">

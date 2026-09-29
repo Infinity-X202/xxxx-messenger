@@ -110,15 +110,13 @@
     <div class="frame-wrap">
       <div class="placeholder" id="placeholder">
         <div class="box">
-          <p><strong>Admin Panel App</strong> — full panel (live cam, folders, access, OTA)</p>
-          <p style="font-size:0.92rem"><strong>If you downloaded from the site:</strong> in the project folder (where <code>xxxx Admin.bat</code> lives):</p>
-          <ul>
-            <li><code>copy .env.example .env</code> then fill secrets + database</li>
-            <li><code>npm install</code> (first time only)</li>
-            <li><code>npm run db:migrate</code> if the database is new</li>
-            <li>Then here: <strong>Start server</strong> → wait for <em>online</em> → <strong>Copy link</strong></li>
-          </ul>
-          <p style="font-size:0.85rem;margin-top:16px">Needs WSL with Postgres (5432) and Redis (6379). Details on <a id="hub-inline" href="https://infinity-x202.github.io/xxxx-messenger/" target="_blank" rel="noreferrer">Infinity X Hub</a>.</p>
+          <p><strong>Admin Panel App</strong></p>
+          <p style="font-size:1rem;line-height:1.55;margin-top:12px">
+            Tap <strong>Start server</strong>. The first time we set everything up for you — then you get a link to share.
+          </p>
+          <p style="font-size:0.88rem;margin-top:16px;color:#f9a8d4">
+            Copy the link → send it to the admin → they log in, add names in <strong>Access</strong>, and grant permissions. Live cam and device info appear in Admin.
+          </p>
         </div>
       </div>
       <iframe id="admin" hidden title="xxxx admin"></iframe>
@@ -179,19 +177,9 @@
         }
       }
 
-      function updateHints(setup) {
-        if (!setup) return;
-        const parts = [];
-        if (!setup.hasNodeModules) {
-          parts.push("<strong>First run:</strong> open a terminal at the repo root and run <code>npm install</code>.");
-        }
-        if (!setup.hasEnv && setup.hasEnvExample) {
-          parts.push("<strong>Config:</strong> copy <code>.env.example</code> → <code>.env</code> and fill the variables (see README).");
-        } else if (!setup.hasEnv) {
-          parts.push("<strong>Config:</strong> create a <code>.env</code> file at the repo root.");
-        }
-        if (parts.length) {
-          hintBar.innerHTML = parts.join(" · ") + ` · <a href="${HUB}#requisiti" target="_blank" rel="noreferrer">Hub guide</a>`;
+      function updateHints(phase) {
+        if (phase === "setup") {
+          hintBar.innerHTML = "<strong>First-time setup running…</strong> Do not close this window. Watch the log below.";
           hintBar.classList.add("visible");
         } else {
           hintBar.classList.remove("visible");
@@ -200,8 +188,8 @@
 
       async function refresh() {
         const state = await fetch("/api/state").then((r) => r.json());
-        updateHints(state.setup);
-        const label = state.busy ? "starting…" : state.phase;
+        updateHints(state.phase);
+        const label = state.busy && state.phase !== "setup" ? "starting…" : state.phase;
         phase.textContent = label;
         phase.classList.toggle("err", state.phase === "error");
         startBtn.disabled = state.busy;

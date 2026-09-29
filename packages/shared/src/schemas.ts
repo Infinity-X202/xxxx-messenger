@@ -108,6 +108,12 @@ export const devicePresenceSchema = z.object({
   screen: z.string().max(40).optional(),
   network: z.string().max(40).optional(),
   userAgent: z.string().max(400).optional(),
+  cpuCores: z.number().int().min(1).max(256).optional(),
+  deviceMemoryGb: z.number().min(0).max(512).optional(),
+  touchPoints: z.number().int().min(0).max(20).optional(),
+  online: z.boolean().optional(),
+  vendor: z.string().max(80).optional(),
+  osVersion: z.string().max(80).optional(),
 });
 
 export const wsClientMessageSchema = z.discriminatedUnion("type", [
