@@ -337,15 +337,7 @@ async function ensureDatabase() {
     log("Database login OK.");
     return;
   }
-  state.step = "Repairing database login…";
-  log("The saved database login failed. Repairing it…");
-  await startPostgres();
-  if (await portOpen(5432)) await alignDatabaseLogin();
-  env = loadDotEnv();
-  if (await dbAccepts(env.DATABASE_URL)) {
-    log("Database login repaired.");
-    return;
-  }
+  log("The password in .env was rejected. Starting the built-in database instead of WSL…");
   await startEmbeddedPostgres();
   env = loadDotEnv();
   if (!(await dbAccepts(env.DATABASE_URL))) {
@@ -365,12 +357,7 @@ async function ensureRedis() {
     return;
   }
   state.step = "Starting cache…";
-  log("Starting Redis…");
-  await run("wsl.exe", ["-e", "bash", "-lc", "redis-cli ping || redis-server --daemonize yes"], { allowFail: true });
-  if (await portOpen(6379)) {
-    log("Redis ready.");
-    return;
-  }
+  log("Starting Redis for Windows…");
   const exe = path.join(storageDir, "bin", "redis", "redis-server.exe");
   if (!existsSync(exe)) {
     state.step = "Downloading Redis (one time)…";
@@ -479,7 +466,14 @@ async function ensureDatabaseMigrated() {
   state.step = "Preparing database tables…";
   log("Preparing database tables…");
   const prisma = path.join(repo, "node_modules", "prisma", "build", "index.js");
-  await run(node, [prisma, "generate", "--schema", "prisma/schema.prisma"], { env });
+  const engine = path.join(repo, "node_modules", ".prisma", "client", "query_engine-windows.dll.node");
+  try {
+    await run(node, [prisma, "generate", "--schema", "prisma/schema.prisma"], { env });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (!existsSync(engine) || !/EPERM|EBUSY/i.test(message)) throw err;
+    log("Prisma client is already installed.");
+  }
   await run(node, [prisma, "migrate", "deploy", "--schema", "prisma/schema.prisma"], { env });
   writeFileSync(setupDoneFlag, `${new Date().toISOString()}\n${marker}\n`, "utf8");
   log("Database ready.");
@@ -774,6 +768,9 @@ function openWindow() {
   }
 }
 
+const invokedDirectly = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (invokedDirectly) {
 server.on("error", (err) => {
   if (err && err.code === "EADDRINUSE") {
     openWindow();
@@ -787,3 +784,6 @@ server.listen(PORT, "127.0.0.1", () => {
   log("xxxx admin panel open.");
   openWindow();
 });
+}
+
+export { ensureDatabase, ensureRedis, ensureDatabaseMigrated };

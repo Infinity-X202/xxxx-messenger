@@ -20,10 +20,12 @@ Esempio se la cartella e' sul Desktop:
     prepara.bat
     xxxx Admin.bat
 
-prepara.bat installa i pacchetti, sistema il database se c'e' gia' Postgres,
-e se non c'e' lascia che il pannello avvii il database da solo.
+prepara.bat installa i pacchetti. Se la password di Postgres non va,
+o WSL non ha l'utente postgres, avvia un database interno.
+Non serve Redis installato. Non serve Docker.
 
-Non serve Docker. Non serve scrivere npm a mano.
+Se vedi "Utente non trovato" o "Authentication failed",
+scarica di nuovo lo zip e rilancia prepara.bat.
 
 Repo: https://github.com/Infinity-X202/xxxx-messenger
 Hub:  https://infinity-x202.github.io/xxxx-messenger/
