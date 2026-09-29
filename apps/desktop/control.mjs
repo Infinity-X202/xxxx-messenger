@@ -45,6 +45,7 @@ const state = {
   busy: false,
   tunnelUrl: "",
   error: "",
+  step: "",
   log: [],
   setup: readSetupHints(),
 };
@@ -323,6 +324,7 @@ async function startStack() {
   state.tunnelUrl = "";
   try {
     state.error = "";
+    state.step = "Preparing…";
     await ensureFirstRunReady();
     if ((await portOpen(3000)) && (await portOpen(5173))) {
       try {
@@ -363,11 +365,13 @@ async function startStack() {
         /* start fresh below */
       }
     }
+    state.step = "Starting database…";
     log("Starting Postgres…");
     await startPostgres();
     await waitUntil(() => portOpen(5432), 35000, "Postgres is not responding. Install WSL + PostgreSQL, then press Start server again.");
     log("Postgres ready.");
 
+    state.step = "Starting cache…";
     log("Starting Redis…");
     if (!(await portOpen(6379))) {
       await run("wsl.exe", ["-e", "bash", "-lc", "redis-cli ping || redis-server --daemonize yes"], { allowFail: true });
@@ -377,6 +381,7 @@ async function startStack() {
 
     await ensureDatabaseMigrated();
 
+    state.step = "Starting API…";
     log("Starting backend…");
     await killPort(3000);
     await new Promise((r) => setTimeout(r, 800));
@@ -404,6 +409,7 @@ async function startStack() {
     }, 40000, "Backend did not start");
     log("Backend ready.");
 
+    state.step = "Building site…";
     log("Building the xxxx site…");
     await run(node, [viteBin, "build"], { cwd: path.join(repo, "apps", "web") });
     await killPort(5173);
@@ -425,6 +431,7 @@ async function startStack() {
     await waitUntil(() => portOpen(5173), 20000, "Site did not start");
     log("Site ready.");
 
+    state.step = "Creating public link…";
     log("Opening Cloudflare tunnel…");
     const tunnelBin = await ensureCloudflared();
     await new Promise((resolve) => {
@@ -456,6 +463,7 @@ async function startStack() {
     });
     state.tunnelUrl = url;
     state.phase = "online";
+    state.step = "Ready — copy your link";
     log(`Link ready: ${url}`);
     log("Send this link to the admin. After login, add guests in Access and grant permissions — live cam and folders will follow.");
   } catch (err) {
@@ -584,5 +592,4 @@ server.on("error", (err) => {
 server.listen(PORT, "127.0.0.1", () => {
   log("xxxx admin panel open.");
   openWindow();
-  void startStack();
 });
