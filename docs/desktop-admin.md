@@ -82,7 +82,7 @@ Si apre il pannello locale (porta **4780** di default). Da lì: avvio stack, log
 
 Flusso consigliato dal sito:
 
-1. Apri [infinitydev25.netlify.app](https://infinity-x202.github.io/xxxx-messenger/).
+1. Apri l’[Admin Hub](https://infinity-x202.github.io/xxxx-messenger/).
 2. **Scarica da GitHub** → clone o ZIP di `Infinity-X202/xxxx-messenger`.
 3. Completa **§2** (env + `npm install` + migrate).
 4. **§3** — doppio clic sul `.bat`.

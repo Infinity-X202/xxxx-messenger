@@ -16,7 +16,7 @@ Static marketing site for the **Admin Panel App** (desktop launcher), not the in
 | `/` | Landing / install instructions |
 | `/?tunnel=https://….trycloudflare.com` | Highlights active tunnel + “Apri login” (validated host suffix) |
 
-Desktop app sets Hub link to `https://infinitydev25.netlify.app/?tunnel=<encoded>` when tunnel is online.
+Desktop app sets Hub link to `https://infinity-x202.github.io/xxxx-messenger/?tunnel=<encoded>` when tunnel is online.
 
 ## Copy & branding
 
