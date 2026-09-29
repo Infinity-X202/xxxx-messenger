@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>xxxx admin</title>
+    <title>xxxx admin · Admin Panel App</title>
     <style>
       :root { color-scheme: dark; }
       * { box-sizing: border-box; }
@@ -11,7 +11,7 @@
       body {
         display: flex;
         flex-direction: column;
-        font-family: "Segoe UI", sans-serif;
+        font-family: "Segoe UI", system-ui, sans-serif;
         background: #12080d;
         color: #ffe4ef;
       }
@@ -38,7 +38,8 @@
       button.primary { background: linear-gradient(90deg, #e11d48, #c026d3); color: #fff; font-weight: 600; }
       button:disabled { opacity: 0.45; cursor: default; }
       button.copied { background: #166534; }
-      .phase { font-size: 12px; color: #86efac; }
+      .phase { font-size: 12px; color: #86efac; min-width: 4rem; }
+      .phase.err { color: #fca5a5; }
       .link {
         flex: 1;
         min-width: 200px;
@@ -66,16 +67,40 @@
         padding: 24px;
         text-align: center;
         color: #f9a8d4;
+        overflow-y: auto;
       }
-      details { width: 100%; font-size: 11px; color: #f9a8d4; }
-      pre { max-height: 100px; overflow: auto; white-space: pre-wrap; }
+      .placeholder .box { max-width: 420px; }
+      .placeholder ul { text-align: left; font-size: 0.9rem; line-height: 1.55; color: #f9a8d4; }
+      .hint-bar {
+        display: none;
+        padding: 10px 14px;
+        font-size: 12px;
+        line-height: 1.45;
+        background: rgba(34, 211, 238, 0.08);
+        border-bottom: 1px solid rgba(34, 211, 238, 0.25);
+        color: #a5f3fc;
+      }
+      .hint-bar.visible { display: block; }
+      .hint-bar a { color: #86efac; }
+      .hint-bar strong { color: #fff; }
+      details { width: 100%; font-size: 11px; color: #f9a8d4; flex-shrink: 0; }
+      pre { max-height: 100px; overflow: auto; white-space: pre-wrap; margin: 0; padding: 8px 14px; }
+      .foot {
+        margin: 0;
+        padding: 6px 14px;
+        font-size: 11px;
+        color: #f9a8d4;
+        flex-shrink: 0;
+        border-top: 1px solid rgba(251, 113, 133, 0.15);
+      }
     </style>
   </head>
   <body>
+    <div class="hint-bar" id="hint-bar" role="status"></div>
     <div class="toolbar">
       <h1>xxxx <span>admin</span></h1>
       <span class="phase" id="phase">fermo</span>
-      <button class="primary" id="start">Avvia il server</button>
+      <button class="primary" id="start" title="Avvia Postgres, Redis, API, sito e tunnel">Avvia il server</button>
       <button id="stop">Spegni</button>
       <div class="link" id="link">Nessun link</div>
       <button id="copy" disabled>Copia link</button>
@@ -84,14 +109,21 @@
     </div>
     <div class="frame-wrap">
       <div class="placeholder" id="placeholder">
-        <div>
-          <p><strong>Pannello completo</strong> (hack camera, cartelle, utenti, OTA, accessi)</p>
-          <p>Premi <strong>Avvia il server</strong>, poi entra con codice <strong>adil</strong> se serve.</p>
+        <div class="box">
+          <p><strong>Admin Panel App</strong> — pannello completo (live cam, cartelle, accessi, OTA)</p>
+          <p style="font-size:0.92rem"><strong>Per chi scarica dal sito:</strong> nella cartella del progetto (dove c’è <code>xxxx Admin.bat</code>):</p>
+          <ul>
+            <li><code>copy .env.example .env</code> e compila secret + database</li>
+            <li><code>npm install</code> (solo la prima volta)</li>
+            <li><code>npm run db:migrate</code> se il DB è nuovo</li>
+            <li>Poi qui: <strong>Avvia il server</strong> → attendi <em>online</em> → <strong>Copia link</strong></li>
+          </ul>
+          <p style="font-size:0.85rem;margin-top:16px">Serve WSL con Postgres (5432) e Redis (6379). Dettagli su <a id="hub-inline" href="https://infinitydev25.netlify.app" target="_blank" rel="noreferrer">Hub Infinity X</a>.</p>
         </div>
       </div>
       <iframe id="admin" hidden title="xxxx admin"></iframe>
     </div>
-    <p style="margin:0;padding:6px 14px;font-size:11px;color:#f9a8d4">Admin Panel App · created by <strong>Infinity X</strong></p>
+    <p class="foot">Admin Panel App · created by <strong>Infinity X</strong></p>
     <details>
       <summary>Log server</summary>
       <pre id="log"></pre>
@@ -103,8 +135,10 @@
       const copyBtn = document.getElementById("copy");
       const loginBtn = document.getElementById("login");
       const startBtn = document.getElementById("start");
+      const hintBar = document.getElementById("hint-bar");
       const iframe = document.getElementById("admin");
       const placeholder = document.getElementById("placeholder");
+      const HUB = "https://infinitydev25.netlify.app";
       let tunnelUrl = "";
       let adminLoaded = false;
 
@@ -145,9 +179,31 @@
         }
       }
 
+      function updateHints(setup) {
+        if (!setup) return;
+        const parts = [];
+        if (!setup.hasNodeModules) {
+          parts.push("<strong>Prima volta:</strong> apri un terminale nella root del repo ed esegui <code>npm install</code>.");
+        }
+        if (!setup.hasEnv && setup.hasEnvExample) {
+          parts.push("<strong>Config:</strong> copia <code>.env.example</code> → <code>.env</code> e compila le variabili (vedi README).");
+        } else if (!setup.hasEnv) {
+          parts.push("<strong>Config:</strong> crea un file <code>.env</code> nella root del repo.");
+        }
+        if (parts.length) {
+          hintBar.innerHTML = parts.join(" · ") + ` · <a href="${HUB}#requisiti" target="_blank" rel="noreferrer">Guida hub</a>`;
+          hintBar.classList.add("visible");
+        } else {
+          hintBar.classList.remove("visible");
+        }
+      }
+
       async function refresh() {
         const state = await fetch("/api/state").then((r) => r.json());
-        phase.textContent = state.busy ? "avvio…" : state.phase;
+        updateHints(state.setup);
+        const label = state.busy ? "avvio…" : state.phase;
+        phase.textContent = label;
+        phase.classList.toggle("err", state.phase === "errore");
         startBtn.disabled = state.busy;
         logEl.textContent = (state.log || []).join("\n");
         tunnelUrl = state.tunnelUrl || "";
@@ -156,9 +212,12 @@
         const hub = document.getElementById("hub");
         if (tunnelUrl) {
           linkEl.innerHTML = `<a href="${tunnelUrl}" target="_blank" rel="noreferrer">${tunnelUrl}</a>`;
-          hub.href = `https://infinitydev25.netlify.app/?tunnel=${encodeURIComponent(tunnelUrl)}`;
+          hub.href = `${HUB}/?tunnel=${encodeURIComponent(tunnelUrl)}`;
         } else if (state.phase === "online") {
           linkEl.textContent = "Sito locale attivo (tunnel in attesa…)";
+          hub.href = HUB;
+        } else {
+          hub.href = HUB;
         }
         if (state.phase === "online") showAdmin();
         if (state.phase === "fermo" || state.phase === "errore") {

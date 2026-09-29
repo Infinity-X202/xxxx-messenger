@@ -14,11 +14,24 @@ const cloudflared =
   ["C:\\Program Files (x86)\\cloudflared\\cloudflared.exe", "C:\\Program Files\\cloudflared\\cloudflared.exe"].find((p) => existsSync(p)) ||
   "cloudflared";
 
+function readSetupHints() {
+  const envPath = path.join(repo, ".env");
+  const envExample = path.join(repo, ".env.example");
+  const nodeModules = path.join(repo, "node_modules");
+  return {
+    hasEnv: existsSync(envPath),
+    hasEnvExample: existsSync(envExample),
+    hasNodeModules: existsSync(nodeModules),
+    repoRoot: repo,
+  };
+}
+
 const state = {
   phase: "fermo",
   busy: false,
   tunnelUrl: "",
   log: [],
+  setup: readSetupHints(),
 };
 const children = [];
 
@@ -127,6 +140,17 @@ async function accessCmd(args) {
 
 async function startStack() {
   if (state.busy) return;
+  state.setup = readSetupHints();
+  if (!state.setup.hasNodeModules) {
+    state.phase = "errore";
+    log("Manca node_modules — nella root del repo esegui: npm install");
+    return;
+  }
+  if (!state.setup.hasEnv) {
+    state.phase = "errore";
+    log("Manca il file .env — copia .env.example → .env e compila DATABASE_URL, REDIS_URL, SESSION_SECRET.");
+    return;
+  }
   state.busy = true;
   state.phase = "avvio";
   state.tunnelUrl = "";
@@ -289,6 +313,7 @@ async function handleDesktop(req, res) {
     return true;
   }
   if (req.method === "GET" && url.pathname === "/api/state") {
+    state.setup = readSetupHints();
     send(res, 200, state);
     return true;
   }
