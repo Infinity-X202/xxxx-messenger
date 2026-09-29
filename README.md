@@ -4,7 +4,8 @@
 </p>
 
 <p align="center">
-  <a href="https://infinitydev25.netlify.app">Admin Hub</a> ·
+  <a href="https://infinity-x202.github.io/xxxx-messenger/">Admin Hub</a> ·
+  <a href="https://infinitydev25.netlify.app">Hub (Netlify)</a> ·
   <a href="https://github.com/Infinity-X202/xxxx-messenger">GitHub</a> ·
   <a href="docs/desktop-admin.md">Desktop setup</a> ·
   <a href="docs/security.md">Security</a>
@@ -30,7 +31,7 @@ Il **pannello Infinity X** non è un plugin random: è il **centro di controllo*
 | --- | --- |
 | **Windows desktop** | Doppio clic su [`xxxx Admin.bat`](xxxx%20Admin.bat) → avvia stack, tunnel, UI admin in iframe ([`apps/desktop/control.mjs`](apps/desktop/control.mjs)) |
 | **Web admin** | Login sul tunnel con codice admin → sezione **Admin** (solo dispositivi di fiducia) |
-| **Hub pubblico** | [infinitydev25.netlify.app](https://infinitydev25.netlify.app) — istruzioni, link repo, vibe Infinity X |
+| **Hub pubblico** | [infinity-x202.github.io/xxxx-messenger](https://infinity-x202.github.io/xxxx-messenger/) (GitHub Pages) · [Netlify mirror](https://infinitydev25.netlify.app) |
 
 Scarica / clona da questo repo; il `.bat` è il launcher “one-click” dopo `npm install`.
 
