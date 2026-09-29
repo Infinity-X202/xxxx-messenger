@@ -1,6 +1,6 @@
 # Desktop admin · install from the hub
 
-> **Target:** chi arriva da [Infinity X Admin Hub](https://infinitydev25.netlify.app) e vuole il pannello sul PC Windows — senza perdere la testa tra Docker e tunnel.
+> **Target:** chi arriva da [Infinity X Admin Hub](https://infinity-x202.github.io/xxxx-messenger/) e vuole il pannello sul PC Windows — senza perdere la testa tra Docker e tunnel.
 
 ---
 
@@ -82,7 +82,7 @@ Si apre il pannello locale (porta **4780** di default). Da lì: avvio stack, log
 
 Flusso consigliato dal sito:
 
-1. Apri [infinitydev25.netlify.app](https://infinitydev25.netlify.app).
+1. Apri [infinitydev25.netlify.app](https://infinity-x202.github.io/xxxx-messenger/).
 2. **Scarica da GitHub** → clone o ZIP di `Infinity-X202/xxxx-messenger`.
 3. Completa **§2** (env + `npm install` + migrate).
 4. **§3** — doppio clic sul `.bat`.
@@ -117,7 +117,7 @@ Log utili: output del `.bat` / `control.mjs` e log server (`npm run dev:server`)
 ## 7 · Link utili
 
 - Repo: [github.com/Infinity-X202/xxxx-messenger](https://github.com/Infinity-X202/xxxx-messenger)
-- Hub: [infinitydev25.netlify.app](https://infinitydev25.netlify.app)
+- Hub: [infinitydev25.netlify.app](https://infinity-x202.github.io/xxxx-messenger/)
 - Security: [`security.md`](security.md)
 
 **Created by Infinity X** — Admin Panel App for **xxxx**.

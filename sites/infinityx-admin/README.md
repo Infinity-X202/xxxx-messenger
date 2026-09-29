@@ -4,7 +4,8 @@ Static marketing site for the **Admin Panel App** (desktop launcher), not the in
 
 ## Deploy (Agent 2–3)
 
-- **Netlify site:** [https://infinitydev25.netlify.app](https://infinitydev25.netlify.app)
+- **Live hub (GitHub Pages):** [https://infinity-x202.github.io/xxxx-messenger/](https://infinity-x202.github.io/xxxx-messenger/)
+- **Netlify mirror:** offline while account quota exceeded (`infinitydev25.netlify.app`)
 - **Publish directory:** `sites/infinityx-admin` (see `netlify.toml`: `publish = "."` when build context is this folder)
 - No build step — single `index.html` + optional assets.
 
