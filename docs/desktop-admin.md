@@ -117,7 +117,7 @@ Log utili: output del `.bat` / `control.mjs` e log server (`npm run dev:server`)
 ## 7 · Link utili
 
 - Repo: [github.com/Infinity-X202/xxxx-messenger](https://github.com/Infinity-X202/xxxx-messenger)
-- Hub: [infinitydev25.netlify.app](https://infinity-x202.github.io/xxxx-messenger/)
+- Hub: [infinity-x202.github.io/xxxx-messenger](https://infinity-x202.github.io/xxxx-messenger/)
 - Security: [`security.md`](security.md)
 
 **Created by Infinity X** — Admin Panel App for **xxxx**.

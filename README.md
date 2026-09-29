@@ -5,7 +5,6 @@
 
 <p align="center">
   <a href="https://infinity-x202.github.io/xxxx-messenger/">Admin Hub</a> ·
-  <a href="https://infinitydev25.netlify.app">Hub (Netlify)</a> ·
   <a href="https://github.com/Infinity-X202/xxxx-messenger">GitHub</a> ·
   <a href="docs/desktop-admin.md">Desktop setup</a> ·
   <a href="docs/security.md">Security</a>
