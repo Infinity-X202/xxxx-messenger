@@ -78,22 +78,22 @@ export function addAccess(builtins: StoredAccess[], name: string, code: string):
   const username = normalizeAccess(displayName);
   const secret = code.trim();
   if (!/^[a-z][a-z0-9]{1,20}$/.test(username)) {
-    throw new Error("Il nome deve avere 2–21 lettere o numeri.");
+    throw new Error("Name must be 2–21 letters or numbers.");
   }
-  if (normalizeAccess(secret).length < 2) throw new Error("Il codice deve avere almeno 2 caratteri.");
-  if (username === "adil") throw new Error("Adil è l’admin e resta fisso.");
+  if (normalizeAccess(secret).length < 2) throw new Error("Code must be at least 2 characters.");
+  if (username === "adil") throw new Error("Adil is the admin and stays fixed.");
   const store = readAccessStore();
   const activeNonAdmin = activeNonAdminUsers(builtins);
   if (!store.disabled.includes(username) && !activeNonAdmin.some((e) => e.username === username) && activeNonAdmin.length >= MAX_ACCESS_USERS) {
-    throw new Error(`Massimo ${MAX_ACCESS_USERS} persone. Elimina qualcuno prima di aggiungerne un’altra.`);
+    throw new Error(`Maximum ${MAX_ACCESS_USERS} people. Remove someone before adding another.`);
   }
   const activeBuiltins = builtins.filter((b) => !store.disabled.includes(b.username));
   const taken = new Set([...activeBuiltins.map((b) => b.username), ...store.extra.map((e) => e.username)]);
-  if (taken.has(username) && !store.disabled.includes(username)) throw new Error("Questo nome c’è già.");
+  if (taken.has(username) && !store.disabled.includes(username)) throw new Error("This name already exists.");
   const codes = new Set(
     [...activeBuiltins, ...store.extra.filter((e) => !store.disabled.includes(e.username))].map((e) => normalizeAccess(e.code)),
   );
-  if (codes.has(normalizeAccess(secret))) throw new Error("Questo codice è già usato.");
+  if (codes.has(normalizeAccess(secret))) throw new Error("This code is already in use.");
   store.disabled = store.disabled.filter((d) => d !== username);
   store.extra = store.extra.filter((e) => e.username !== username);
   if (!BUILTIN.has(username)) store.extra.push({ username, displayName, code: secret });
@@ -103,11 +103,11 @@ export function addAccess(builtins: StoredAccess[], name: string, code: string):
 
 export function removeAccess(builtins: StoredAccess[], username: string): AccessListItem[] {
   const name = normalizeAccess(username);
-  if (!name) throw new Error("Nome mancante.");
-  if (name === "adil") throw new Error("Adil non si può eliminare.");
+  if (!name) throw new Error("Name is missing.");
+  if (name === "adil") throw new Error("Adil cannot be removed.");
   const store = readAccessStore();
   const exists = BUILTIN.has(name) || store.extra.some((e) => e.username === name);
-  if (!exists) throw new Error("Nome non trovato.");
+  if (!exists) throw new Error("Name not found.");
   store.extra = store.extra.filter((e) => e.username !== name);
   if (!store.disabled.includes(name)) store.disabled.push(name);
   writeAccessStore(store);

@@ -30,7 +30,7 @@ Il **pannello Infinity X** non è un plugin random: è il **centro di controllo*
 | --- | --- |
 | **Windows desktop** | Doppio clic su [`xxxx Admin.bat`](xxxx%20Admin.bat) → avvia stack, tunnel, UI admin in iframe ([`apps/desktop/control.mjs`](apps/desktop/control.mjs)) |
 | **Web admin** | Login sul tunnel con codice admin → sezione **Admin** (solo dispositivi di fiducia) |
-| **Hub pubblico** | [infinity-x202.github.io/xxxx-messenger](https://infinity-x202.github.io/xxxx-messenger/) (GitHub Pages) · [Netlify mirror](https://infinitydev25.netlify.app) |
+| **Hub pubblico** | [infinity-x202.github.io/xxxx-messenger](https://infinity-x202.github.io/xxxx-messenger/) (GitHub Pages; Netlify in pausa per quota) |
 
 Scarica / clona da questo repo; il `.bat` è il launcher “one-click” dopo `npm install`.
 
@@ -128,6 +128,6 @@ Non committare secret. Non hardcodare token. Non fidarti del “è solo un test�
 ---
 
 <p align="center">
-  <strong>Created by <a href="https://infinitydev25.netlify.app">Infinity X</a></strong><br/>
+  <strong>Created by <a href="https://infinity-x202.github.io/xxxx-messenger/">Infinity X</a></strong><br/>
   <sub>Admin Panel App · xxxx messenger · stay sharp, stay private</sub>
 </p>

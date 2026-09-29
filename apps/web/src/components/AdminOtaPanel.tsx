@@ -28,7 +28,7 @@ export function AdminOtaPanel() {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     if (!fileRef.current?.files?.[0]) {
-      toast.error("Scegli l’APK");
+      toast.error("Choose the APK");
       return;
     }
     setBusy(true);
@@ -40,7 +40,7 @@ export function AdminOtaPanel() {
         headers: { "x-csrf-token": getCsrfToken() },
       });
       if (!res.ok) throw new Error("Upload failed");
-      toast.success("OTA pubblicata. Chi ha l’app vedrà il popup.");
+      toast.success("OTA published. App users will see the popup.");
       qc.invalidateQueries({ queryKey: ["admin-ota"] });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "OTA failed");
@@ -55,7 +55,7 @@ export function AdminOtaPanel() {
         <Rocket className="h-5 w-5 text-amber-300" />
         <div>
           <h1 className="font-serif text-2xl text-pink-100">OTA</h1>
-          <p className="text-xs text-pink-300/80">Carica un APK: sull’app compare il popup con le note e Aggiorna.</p>
+          <p className="text-xs text-pink-300/80">Upload an APK: the app shows a popup with notes and Update.</p>
         </div>
       </div>
       {ota && (
@@ -65,31 +65,31 @@ export function AdminOtaPanel() {
           </p>
           <p className="mt-2 whitespace-pre-wrap text-pink-200/80">{ota.notes}</p>
           <a className="mt-2 inline-block text-xs text-amber-300 underline" href="/api/v1/app/download">
-            Scarica APK attuale
+            Download current APK
           </a>
         </div>
       )}
       <form className="max-w-lg space-y-3 rounded-2xl border border-pink-500/20 bg-zinc-950/80 p-4" onSubmit={(e) => void onSubmit(e)}>
         <label className="block text-xs text-pink-300/80">
-          versionCode (numero, deve essere maggiore di quello sull’app)
+          versionCode (number, must be higher than the one on the app)
           <Input name="versionCode" type="number" min={1} defaultValue={(ota?.versionCode ?? 0) + 1} className="mt-1" required />
         </label>
         <label className="block text-xs text-pink-300/80">
-          Nome versione
+          Version name
           <Input name="versionName" defaultValue="1.1" className="mt-1" required />
         </label>
         <label className="block text-xs text-pink-300/80">
-          Note (le vede l’utente nel popup)
+          Notes (shown in the user popup)
           <textarea
             name="notes"
             rows={4}
             className="mt-1 w-full rounded-md border border-pink-500/30 bg-zinc-950 px-3 py-2 text-sm text-pink-50"
-            defaultValue="Nuove funzioni e correzioni."
+            defaultValue="New features and fixes."
           />
         </label>
         <input ref={fileRef} name="file" type="file" accept=".apk,application/vnd.android.package-archive" className="text-sm text-pink-200" />
         <Button type="submit" disabled={busy} className="rounded-full bg-gradient-to-r from-amber-500 to-rose-500">
-          {busy ? "Pubblico…" : "Lancia OTA"}
+          {busy ? "Publishing…" : "Launch OTA"}
         </Button>
       </form>
     </div>

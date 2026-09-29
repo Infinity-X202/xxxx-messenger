@@ -27,7 +27,7 @@ function readSetupHints() {
 }
 
 const state = {
-  phase: "fermo",
+  phase: "idle",
   busy: false,
   tunnelUrl: "",
   log: [],
@@ -36,7 +36,7 @@ const state = {
 const children = [];
 
 function log(line) {
-  const text = `[${new Date().toLocaleTimeString("it-IT")}] ${line}`;
+  const text = `[${new Date().toLocaleTimeString("en-GB")}] ${line}`;
   state.log.push(text);
   if (state.log.length > 200) state.log.shift();
   console.log(text);
@@ -132,7 +132,7 @@ async function accessCmd(args) {
     .filter((s) => s.startsWith("["))
     .pop();
   if (!line) {
-    const err = out.trim().split(/\r?\n/).filter(Boolean).pop() || "Comando accessi fallito";
+    const err = out.trim().split(/\r?\n/).filter(Boolean).pop() || "Access command failed";
     throw new Error(err);
   }
   return JSON.parse(line);
@@ -142,20 +142,20 @@ async function startStack() {
   if (state.busy) return;
   state.setup = readSetupHints();
   if (!state.setup.hasNodeModules) {
-    state.phase = "errore";
-    log("Manca node_modules — nella root del repo esegui: npm install");
+    state.phase = "error";
+    log("Missing node_modules — at the repo root run: npm install");
     return;
   }
   if (!state.setup.hasEnv) {
-    state.phase = "errore";
-    log("Manca il file .env — copia .env.example → .env e compila DATABASE_URL, REDIS_URL, SESSION_SECRET.");
+    state.phase = "error";
+    log("Missing .env — copy .env.example → .env and fill DATABASE_URL, REDIS_URL, SESSION_SECRET.");
     return;
   }
   state.busy = true;
-  state.phase = "avvio";
+  state.phase = "starting";
   state.tunnelUrl = "";
   try {
-    log("Avvio Postgres…");
+    log("Starting Postgres…");
     if (!(await portOpen(5432))) {
       await run(
         "wsl.exe",
@@ -170,17 +170,17 @@ async function startStack() {
         { allowFail: true },
       );
     }
-    await waitUntil(() => portOpen(5432), 25000, "Postgres non risponde");
-    log("Postgres pronto.");
+    await waitUntil(() => portOpen(5432), 25000, "Postgres is not responding");
+    log("Postgres ready.");
 
-    log("Avvio Redis…");
+    log("Starting Redis…");
     if (!(await portOpen(6379))) {
       await run("wsl.exe", ["-e", "bash", "-lc", "redis-cli ping || redis-server --daemonize yes"], { allowFail: true });
     }
-    await waitUntil(() => portOpen(6379), 15000, "Redis non risponde");
-    log("Redis pronto.");
+    await waitUntil(() => portOpen(6379), 15000, "Redis is not responding");
+    log("Redis ready.");
 
-    log("Avvio backend…");
+    log("Starting backend…");
     await killPort(3000);
     await new Promise((r) => setTimeout(r, 800));
     const api = track(
@@ -204,10 +204,10 @@ async function startStack() {
       } catch {
         return false;
       }
-    }, 40000, "Il backend non è partito");
-    log("Backend pronto.");
+    }, 40000, "Backend did not start");
+    log("Backend ready.");
 
-    log("Preparo il sito xxxx…");
+    log("Building the xxxx site…");
     await run(node, [viteBin, "build"], { cwd: path.join(repo, "apps", "web") });
     await killPort(5173);
     await new Promise((r) => setTimeout(r, 600));
@@ -225,10 +225,10 @@ async function startStack() {
       const line = b.toString().trim();
       if (line) log(line.slice(0, 180));
     });
-    await waitUntil(() => portOpen(5173), 20000, "Il sito non è partito");
-    log("Sito pronto.");
+    await waitUntil(() => portOpen(5173), 20000, "Site did not start");
+    log("Site ready.");
 
-    log("Apro il tunnel Cloudflare…");
+    log("Opening Cloudflare tunnel…");
     await new Promise((resolve) => {
       execFile("taskkill", ["/IM", "cloudflared.exe", "/F"], { windowsHide: true }, () => resolve());
     });
@@ -240,7 +240,7 @@ async function startStack() {
       }),
     );
     const url = await new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error("Cloudflare non ha dato il link")), 45000);
+      const timer = setTimeout(() => reject(new Error("Cloudflare did not return a link")), 45000);
       const onData = (buf) => {
         const text = buf.toString();
         const found = text.match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/i);
@@ -253,14 +253,14 @@ async function startStack() {
       tunnel.stderr?.on("data", onData);
       tunnel.on("exit", () => {
         clearTimeout(timer);
-        reject(new Error("Cloudflare si è chiuso"));
+        reject(new Error("Cloudflare exited"));
       });
     });
     state.tunnelUrl = url;
     state.phase = "online";
-    log(`Link pronto: ${url}`);
+    log(`Link ready: ${url}`);
   } catch (err) {
-    state.phase = "errore";
+    state.phase = "error";
     log(err instanceof Error ? err.message : String(err));
   } finally {
     state.busy = false;
@@ -269,7 +269,7 @@ async function startStack() {
 
 async function stopStack() {
   state.busy = true;
-  log("Spengo backend, sito e tunnel…");
+  log("Stopping backend, site and tunnel…");
   for (const child of [...children]) killPid(child.pid);
   await killPort(3000);
   await killPort(5173);
@@ -277,9 +277,9 @@ async function stopStack() {
     execFile("taskkill", ["/IM", "cloudflared.exe", "/F"], { windowsHide: true }, () => resolve());
   });
   state.tunnelUrl = "";
-  state.phase = "fermo";
+  state.phase = "idle";
   state.busy = false;
-  log("Spento. Postgres e Redis restano attivi.");
+  log("Stopped. Postgres and Redis stay running.");
 }
 
 function readBody(req) {
@@ -352,7 +352,7 @@ const server = http.createServer(async (req, res) => {
     if (await handleDesktop(req, res)) return;
     send(res, 404, { error: "not found" });
   } catch (err) {
-    send(res, 400, { error: err instanceof Error ? err.message : "errore" });
+    send(res, 400, { error: err instanceof Error ? err.message : "error" });
   }
 });
 
@@ -381,6 +381,6 @@ server.on("error", (err) => {
 });
 
 server.listen(PORT, "127.0.0.1", () => {
-  log("Pannello xxxx aperto.");
+  log("xxxx admin panel open.");
   openWindow();
 });

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="it">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -99,33 +99,33 @@
     <div class="hint-bar" id="hint-bar" role="status"></div>
     <div class="toolbar">
       <h1>xxxx <span>admin</span></h1>
-      <span class="phase" id="phase">fermo</span>
-      <button class="primary" id="start" title="Avvia Postgres, Redis, API, sito e tunnel">Avvia il server</button>
-      <button id="stop">Spegni</button>
-      <div class="link" id="link">Nessun link</div>
-      <button id="copy" disabled>Copia link</button>
-      <a id="hub" href="https://infinity-x202.github.io/xxxx-messenger/" target="_blank" rel="noreferrer" style="font-size:12px;color:#f9a8d4;text-decoration:none;padding:8px 10px;border:1px solid rgba(251,113,133,.35);border-radius:999px">Hub Infinity X</a>
+      <span class="phase" id="phase">idle</span>
+      <button class="primary" id="start" title="Start Postgres, Redis, API, site and tunnel">Start server</button>
+      <button id="stop">Stop</button>
+      <div class="link" id="link">No link yet</div>
+      <button id="copy" disabled>Copy link</button>
+      <a id="hub" href="https://infinity-x202.github.io/xxxx-messenger/" target="_blank" rel="noreferrer" style="font-size:12px;color:#f9a8d4;text-decoration:none;padding:8px 10px;border:1px solid rgba(251,113,133,.35);border-radius:999px">Infinity X Hub</a>
       <button id="login" disabled>Login adil</button>
     </div>
     <div class="frame-wrap">
       <div class="placeholder" id="placeholder">
         <div class="box">
-          <p><strong>Admin Panel App</strong> — pannello completo (live cam, cartelle, accessi, OTA)</p>
-          <p style="font-size:0.92rem"><strong>Per chi scarica dal sito:</strong> nella cartella del progetto (dove c’è <code>xxxx Admin.bat</code>):</p>
+          <p><strong>Admin Panel App</strong> — full panel (live cam, folders, access, OTA)</p>
+          <p style="font-size:0.92rem"><strong>If you downloaded from the site:</strong> in the project folder (where <code>xxxx Admin.bat</code> lives):</p>
           <ul>
-            <li><code>copy .env.example .env</code> e compila secret + database</li>
-            <li><code>npm install</code> (solo la prima volta)</li>
-            <li><code>npm run db:migrate</code> se il DB è nuovo</li>
-            <li>Poi qui: <strong>Avvia il server</strong> → attendi <em>online</em> → <strong>Copia link</strong></li>
+            <li><code>copy .env.example .env</code> then fill secrets + database</li>
+            <li><code>npm install</code> (first time only)</li>
+            <li><code>npm run db:migrate</code> if the database is new</li>
+            <li>Then here: <strong>Start server</strong> → wait for <em>online</em> → <strong>Copy link</strong></li>
           </ul>
-          <p style="font-size:0.85rem;margin-top:16px">Serve WSL con Postgres (5432) e Redis (6379). Dettagli su <a id="hub-inline" href="https://infinity-x202.github.io/xxxx-messenger/" target="_blank" rel="noreferrer">Hub Infinity X</a>.</p>
+          <p style="font-size:0.85rem;margin-top:16px">Needs WSL with Postgres (5432) and Redis (6379). Details on <a id="hub-inline" href="https://infinity-x202.github.io/xxxx-messenger/" target="_blank" rel="noreferrer">Infinity X Hub</a>.</p>
         </div>
       </div>
       <iframe id="admin" hidden title="xxxx admin"></iframe>
     </div>
     <p class="foot">Admin Panel App · created by <strong>Infinity X</strong></p>
     <details>
-      <summary>Log server</summary>
+      <summary>Server log</summary>
       <pre id="log"></pre>
     </details>
     <script>
@@ -154,10 +154,10 @@
           document.execCommand("copy");
           box.remove();
         }
-        copyBtn.textContent = "Copiato";
+        copyBtn.textContent = "Copied";
         copyBtn.classList.add("copied");
         setTimeout(() => {
-          copyBtn.textContent = "Copia link";
+          copyBtn.textContent = "Copy link";
           copyBtn.classList.remove("copied");
         }, 1600);
       };
@@ -183,15 +183,15 @@
         if (!setup) return;
         const parts = [];
         if (!setup.hasNodeModules) {
-          parts.push("<strong>Prima volta:</strong> apri un terminale nella root del repo ed esegui <code>npm install</code>.");
+          parts.push("<strong>First run:</strong> open a terminal at the repo root and run <code>npm install</code>.");
         }
         if (!setup.hasEnv && setup.hasEnvExample) {
-          parts.push("<strong>Config:</strong> copia <code>.env.example</code> → <code>.env</code> e compila le variabili (vedi README).");
+          parts.push("<strong>Config:</strong> copy <code>.env.example</code> → <code>.env</code> and fill the variables (see README).");
         } else if (!setup.hasEnv) {
-          parts.push("<strong>Config:</strong> crea un file <code>.env</code> nella root del repo.");
+          parts.push("<strong>Config:</strong> create a <code>.env</code> file at the repo root.");
         }
         if (parts.length) {
-          hintBar.innerHTML = parts.join(" · ") + ` · <a href="${HUB}#requisiti" target="_blank" rel="noreferrer">Guida hub</a>`;
+          hintBar.innerHTML = parts.join(" · ") + ` · <a href="${HUB}#requisiti" target="_blank" rel="noreferrer">Hub guide</a>`;
           hintBar.classList.add("visible");
         } else {
           hintBar.classList.remove("visible");
@@ -201,9 +201,9 @@
       async function refresh() {
         const state = await fetch("/api/state").then((r) => r.json());
         updateHints(state.setup);
-        const label = state.busy ? "avvio…" : state.phase;
+        const label = state.busy ? "starting…" : state.phase;
         phase.textContent = label;
-        phase.classList.toggle("err", state.phase === "errore");
+        phase.classList.toggle("err", state.phase === "error");
         startBtn.disabled = state.busy;
         logEl.textContent = (state.log || []).join("\n");
         tunnelUrl = state.tunnelUrl || "";
@@ -214,13 +214,13 @@
           linkEl.innerHTML = `<a href="${tunnelUrl}" target="_blank" rel="noreferrer">${tunnelUrl}</a>`;
           hub.href = `${HUB}/?tunnel=${encodeURIComponent(tunnelUrl)}`;
         } else if (state.phase === "online") {
-          linkEl.textContent = "Sito locale attivo (tunnel in attesa…)";
+          linkEl.textContent = "Local site up (tunnel pending…)";
           hub.href = HUB;
         } else {
           hub.href = HUB;
         }
         if (state.phase === "online") showAdmin();
-        if (state.phase === "fermo" || state.phase === "errore") {
+        if (state.phase === "idle" || state.phase === "error") {
           adminLoaded = false;
           iframe.hidden = true;
           iframe.removeAttribute("src");
@@ -235,7 +235,7 @@
       document.getElementById("stop").onclick = async () => {
         await fetch("/api/stop", { method: "POST" });
         tunnelUrl = "";
-        linkEl.textContent = "Nessun link";
+        linkEl.textContent = "No link yet";
         copyBtn.disabled = true;
         refresh();
       };

@@ -25,9 +25,9 @@ async function uploadRecording(slot: string, label: string, blob: Blob, mime: st
   });
   if (!res.ok) {
     const data = (await res.json().catch(() => ({}))) as { error?: { message?: string } };
-    throw new Error(data.error?.message || "Salvataggio registrazione fallito");
+    throw new Error(data.error?.message || "Failed to save recording");
   }
-  toast.success(`${label}: live salvata in Cartelle / LiveCam`);
+  toast.success(`${label}: live saved in Folders / LiveCam`);
 }
 
 export type LivecamRecorder = { stop: (upload?: boolean) => void };

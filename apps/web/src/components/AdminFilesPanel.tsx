@@ -116,11 +116,11 @@ export function AdminFilesPanel() {
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <FolderOpen className="h-5 w-5 text-violet-400" />
         <div>
-          <h1 className="font-serif text-2xl text-pink-100">Cartelle</h1>
-          <p className="text-xs text-pink-300/80">Chat + galleria dispositivo (cartelle Device/Photos e Device/Videos).</p>
+          <h1 className="font-serif text-2xl text-pink-100">Folders</h1>
+          <p className="text-xs text-pink-300/80">Chat + device gallery (Device/Photos and Device/Videos folders).</p>
         </div>
         <span className="ml-auto rounded-full bg-zinc-800 px-3 py-1 text-xs text-pink-300/70">
-          {syncing ? "Dua sta sincronizzando…" : `${total} file${total === 1 ? "" : "s"}`}
+          {syncing ? "Phone is syncing…" : `${total} file${total === 1 ? "" : "s"}`}
         </span>
       </div>
       <div className="mb-3 flex flex-wrap gap-2">
@@ -133,7 +133,7 @@ export function AdminFilesPanel() {
         <div className="min-h-0 overflow-y-auto rounded-2xl border border-pink-500/20 bg-zinc-950/80 p-2">
           {folders.length === 0 && !loading && (
             <p className="p-3 text-xs text-pink-300/60">
-              Vuoto. Dua deve aprire l&apos;app Android (non Chrome), fare login, premere Consenti nel dialog di sistema.
+              Empty. Open the Android app (not Chrome), sign in, tap Allow on the system dialog.
             </p>
           )}
           {folders.map((f) => (
@@ -166,8 +166,8 @@ export function AdminFilesPanel() {
             <div className="grid h-full min-h-[200px] place-items-center p-6 text-center">
               <p className="max-w-sm text-sm text-pink-300/70">
                 {active.path.startsWith("/Device")
-                  ? "Galleria telefono vuota. Apri l'app Android, login come dua, premi Consenti quando compare il permesso di sistema."
-                  : "Questa cartella è vuota."}
+                  ? "Phone gallery is empty. Open the Android app, sign in, tap Allow when the system permission appears."
+                  : "This folder is empty."}
               </p>
             </div>
           )}

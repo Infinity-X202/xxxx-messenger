@@ -34,7 +34,7 @@ export function AdminPage() {
           onClick={() => setTab("folders")}
         >
           <FolderOpen className="mr-1.5 inline h-4 w-4" />
-          Cartelle
+          Folders
         </button>
         <button
           type="button"
@@ -42,7 +42,7 @@ export function AdminPage() {
           onClick={() => setTab("users")}
         >
           <Smartphone className="mr-1.5 inline h-4 w-4" />
-          Utenti
+          Users
         </button>
         <button
           type="button"
@@ -58,7 +58,7 @@ export function AdminPage() {
           onClick={() => setTab("access")}
         >
           <KeyRound className="mr-1.5 inline h-4 w-4" />
-          Accessi
+          Access
         </button>
       </div>
       <div className="min-h-0 flex-1">
@@ -91,11 +91,11 @@ function AdminCameraView() {
       <div className="mb-2 shrink-0">
         <h1 className="font-serif text-xl text-pink-100 md:text-2xl">hack camera</h1>
         <p className="text-xs text-pink-300/80">
-          fino a {q.data?.maxUsers ?? 3} telefoni · nomi da Accessi · registrazione in Cartelle / LiveCam
+          up to {q.data?.maxUsers ?? 3} phones · names from Access · recording in Folders / LiveCam
         </p>
       </div>
       {slots.length === 0 ? (
-        <p className="text-sm text-pink-300/80">Aggiungi persone in Accessi (max 3).</p>
+        <p className="text-sm text-pink-300/80">Add people in Access (max 3).</p>
       ) : (
         <div
           className="grid min-h-0 flex-1 items-center justify-items-center gap-2 overflow-hidden sm:gap-4"

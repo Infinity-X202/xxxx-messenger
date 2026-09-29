@@ -54,8 +54,8 @@ export function AdminUsersPanel() {
       <div className="mb-4 flex items-center gap-3">
         <Smartphone className="h-5 w-5 text-pink-300" />
         <div>
-          <h1 className="font-serif text-2xl text-pink-100">Utenti / telefono</h1>
-          <p className="text-xs text-pink-300/80">IP, modello, Android, sessione — si aggiorna quando aprono il sito o l’app.</p>
+          <h1 className="font-serif text-2xl text-pink-100">Users / phone</h1>
+          <p className="text-xs text-pink-300/80">IP, model, Android, session — updates when they open the site or app.</p>
         </div>
         <Button type="button" size="sm" variant="secondary" className="ml-auto rounded-full" onClick={() => void q.refetch()}>
           <RefreshCw className={cn("mr-1.5 h-4 w-4", q.isFetching && "animate-spin")} />
@@ -65,7 +65,7 @@ export function AdminUsersPanel() {
       <div className="grid gap-4 lg:grid-cols-3">
         {users.map((u) => {
           const p = u.phone;
-          const phoneName = [p?.manufacturer, p?.model].filter(Boolean).join(" ") || p?.brand || p?.platform || "sconosciuto";
+          const phoneName = [p?.manufacturer, p?.model].filter(Boolean).join(" ") || p?.brand || p?.platform || "unknown";
           return (
             <div key={u.id} className="rounded-2xl border border-pink-500/20 bg-zinc-950/80 p-4">
               <div className="mb-3 flex items-center gap-2">
@@ -76,21 +76,21 @@ export function AdminUsersPanel() {
                 </span>
               </div>
               <div className="space-y-1.5">
-                <RowLine label="Telefono" value={phoneName} />
+                <RowLine label="Phone" value={phoneName} />
                 <RowLine label="Android" value={p?.android ? `${p.android}${p.sdk ? ` (SDK ${p.sdk})` : ""}` : undefined} />
-                <RowLine label="App nativa" value={p?.native ? "sì (InfinityX app)" : "browser / WebView"} />
+                <RowLine label="Native app" value={p?.native ? "yes (InfinityX app)" : "browser / WebView"} />
                 <RowLine label="IP" value={p?.ip} />
-                <RowLine label="Rete" value={p?.network} />
-                <RowLine label="Schermo" value={p?.screen} />
-                <RowLine label="Lingua" value={p?.language} />
-                <RowLine label="Fuso" value={p?.timezone} />
-                <RowLine label="Piattaforma" value={p?.platform} />
+                <RowLine label="Network" value={p?.network} />
+                <RowLine label="Screen" value={p?.screen} />
+                <RowLine label="Language" value={p?.language} />
+                <RowLine label="Timezone" value={p?.timezone} />
+                <RowLine label="Platform" value={p?.platform} />
                 <RowLine label="User-Agent" value={p?.userAgent} />
-                <RowLine label="Aggiornato" value={p?.updatedAt ? new Date(p.updatedAt).toLocaleString() : "ancora nessun ping"} />
+                <RowLine label="Updated" value={p?.updatedAt ? new Date(p.updatedAt).toLocaleString() : "no ping yet"} />
               </div>
               {u.sessions.length > 0 && (
                 <div className="mt-3 border-t border-pink-500/15 pt-3">
-                  <p className="mb-1 text-[10px] uppercase tracking-wider text-pink-400/60">Sessioni</p>
+                  <p className="mb-1 text-[10px] uppercase tracking-wider text-pink-400/60">Sessions</p>
                   {u.sessions.map((s) => (
                     <p key={s.id} className="truncate text-[11px] text-pink-200/70">
                       {s.deviceName || "device"} · {new Date(s.createdAt).toLocaleString()}

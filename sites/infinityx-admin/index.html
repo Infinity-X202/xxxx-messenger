@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="it">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Infinity X Admin Panel App — avvia server xxxx, tunnel Cloudflare e pannello desktop. Created by Infinity X." />
+    <meta name="description" content="Infinity X Admin Panel App — start the xxxx server, Cloudflare tunnel, and desktop control room. Created by Infinity X." />
     <meta name="theme-color" content="#0c0610" />
     <title>Infinity X Admin · xxxx messenger</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -371,102 +371,105 @@
       <nav>
         <div class="logo"><span class="mono">xxxx</span> <em>admin</em></div>
         <div class="nav-links">
-          <a href="#desktop">App desktop</a>
-          <a href="#requisiti">Requisiti</a>
-          <a href="#funzioni">Funzioni</a>
+          <a href="#desktop">Desktop app</a>
+          <a href="#requisiti">Requirements</a>
+          <a href="#funzioni">Features</a>
           <a href="https://github.com/Infinity-X202/xxxx-messenger" target="_blank" rel="noreferrer">GitHub</a>
         </div>
         <div class="badge"><span class="pulse"></span>Infinity X</div>
       </nav>
 
       <header class="hero reveal">
-        <span class="hero-tag">// Admin Panel App · messenger privato</span>
-        <h1>Il tuo <span class="grad">command center</span> xxxx.</h1>
+        <span class="hero-tag">// Admin Panel App · private messenger</span>
+        <h1>Your <span class="grad">command center</span> xxxx.</h1>
         <p class="lead">
-          Non è il pannello web nel browser: è l’<strong>app desktop Windows</strong> che avvia Postgres, Redis, API, sito Vite e tunnel Cloudflare — poi condividi il link con chi vuoi. Vibe da ops room, fatto per restare professionale.
+          This is not the in-browser web panel: it is the <strong>Windows desktop app</strong> that starts Postgres, Redis, API, Vite site and a Cloudflare tunnel — then you share the link with anyone. Ops-room vibe, built to stay professional.
         </p>
         <div class="cta-row">
-          <a class="btn" id="dl-desktop" href="https://github.com/Infinity-X202/xxxx-messenger" target="_blank" rel="noreferrer">
-            Scarica / clona da GitHub
+          <a class="btn" id="dl-panel" href="xxxx-Admin-Panel.zip" download="xxxx-Admin-Panel.zip">
+            Download Admin Panel
           </a>
-          <a class="btn secondary" href="#desktop">Come si usa</a>
-          <a class="btn secondary" href="#" id="open-web">Login web tunnel</a>
+          <a class="btn secondary" id="dl-desktop" href="https://github.com/Infinity-X202/xxxx-messenger" target="_blank" rel="noreferrer">
+            Clone from GitHub
+          </a>
+          <a class="btn secondary" href="#desktop">How it works</a>
+          <a class="btn secondary" href="#" id="open-web">Tunnel web login</a>
         </div>
         <div class="tunnel-banner" id="tunnel-banner" role="status">
-          <p><strong>Tunnel attivo rilevato.</strong> Apri il login xxxx sul link condiviso dall’admin:</p>
+          <p><strong>Active tunnel detected.</strong> Open xxxx login on the link shared by the admin:</p>
           <code id="tunnel-display"></code>
           <div class="cta-row" style="margin-top:16px">
-            <a class="btn" id="tunnel-login" href="#">Apri login ora</a>
-            <button type="button" class="btn secondary" id="copy-tunnel">Copia link tunnel</button>
+            <a class="btn" id="tunnel-login" href="#">Open login now</a>
+            <button type="button" class="btn secondary" id="copy-tunnel">Copy tunnel link</button>
           </div>
         </div>
       </header>
 
       <section id="desktop" class="reveal">
-        <p class="section-label">01 · prodotto</p>
-        <h2 class="section-title">Admin Panel App desktop</h2>
+        <p class="section-label">01 · product</p>
+        <h2 class="section-title">Admin Panel desktop app</h2>
         <p class="section-desc">
-          Per chi parte da zero: clona il repo, installa le dipendenze una volta, configura <code style="font-family:JetBrains Mono;font-size:0.85em;color:var(--cyan)">.env</code>, poi lancia l’app. Un clic su <strong>Avvia il server</strong> e il resto è automatico.
+          Starting from zero: download the Admin Panel zip (source only — no unsigned .exe), unzip, install dependencies once, set <code style="font-family:JetBrains Mono;font-size:0.85em;color:var(--cyan)">.env</code>, then launch. One click on <strong>Start server</strong> and the rest is automatic.
         </p>
         <div class="desktop-hero">
-          <h3>Pipeline in 5 mosse</h3>
-          <p class="sub">Dopo il clone, tutto passa da <strong>xxxx Admin.bat</strong> o <code style="font-family:JetBrains Mono;font-size:0.8em">node apps/desktop/control.mjs</code>.</p>
+          <h3>Pipeline in 5 moves</h3>
+          <p class="sub">After unzip or clone, everything runs through <strong>xxxx Admin.bat</strong> or <code style="font-family:JetBrains Mono;font-size:0.8em">node apps/desktop/control.mjs</code>.</p>
           <div class="flow">
             <div class="flow-step">
-              <strong>Clone / download</strong>
-              <span>Repo ufficiale Infinity X. Nessun installer MSI per ora — GitHub è la fonte.</span>
-              <code>git clone …/xxxx-messenger</code>
+              <strong>Download zip</strong>
+              <span>Official Infinity X source zip. No MSI / no unsigned installer — Windows stays quiet.</span>
+              <code>xxxx-Admin-Panel.zip</code>
             </div>
             <div class="flow-step">
-              <strong>Dipendenze</strong>
-              <span>Una sola volta nella root del progetto.</span>
+              <strong>Dependencies</strong>
+              <span>Once, at the project root.</span>
               <code>npm install</code>
             </div>
             <div class="flow-step">
-              <strong>Avvia launcher</strong>
-              <span>Finestra app dedicata (Edge/Chrome app mode).</span>
+              <strong>Launch</strong>
+              <span>Dedicated app window (Edge/Chrome app mode).</span>
               <code>xxxx Admin.bat</code>
             </div>
             <div class="flow-step">
-              <strong>Avvia il server</strong>
-              <span>Postgres → Redis → API → build web → preview → cloudflared.</span>
+              <strong>Start server</strong>
+              <span>Postgres → Redis → API → web build → preview → cloudflared.</span>
             </div>
             <div class="flow-step">
-              <strong>Copia &amp; condividi</strong>
-              <span>Link <code style="display:inline;font-size:inherit">*.trycloudflare.com</code> — invialo a tutti.</span>
+              <strong>Copy &amp; share</strong>
+              <span>A <code style="display:inline;font-size:inherit">*.trycloudflare.com</code> link — send it to everyone.</span>
             </div>
           </div>
-          <div class="terminal" aria-label="Esempio comandi">
-            <span class="dim"># prima volta (root repo)</span><br />
-            <span class="cmd">cp .env.example .env</span> <span class="dim"># poi modifica secret e DB</span><br />
+          <div class="terminal" aria-label="Example commands">
+            <span class="dim"># first time (repo root)</span><br />
+            <span class="cmd">copy .env.example .env</span> <span class="dim"># then fill secrets and DB</span><br />
             <span class="cmd">npm install</span><br />
-            <span class="dim"># ogni sessione admin</span><br />
+            <span class="dim"># every admin session</span><br />
             <span class="cmd">.\xxxx Admin.bat</span><br />
-            <span class="dim"># nell’app → Avvia il server → Copia link</span>
+            <span class="dim"># in the app → Start server → Copy link</span>
           </div>
         </div>
       </section>
 
       <section id="requisiti" class="reveal">
-        <p class="section-label">02 · stack locale</p>
-        <h2 class="section-title">Prima di premere Avvia</h2>
-        <p class="section-desc">L’app desktop si aspetta lo stesso stack del progetto xxxx. Carte rapide per chi scarica dal sito senza server già pronto.</p>
+        <p class="section-label">02 · local stack</p>
+        <h2 class="section-title">Before you press Start</h2>
+        <p class="section-desc">The desktop app expects the same xxxx stack. Quick cards for anyone downloading from this site with no server yet.</p>
         <div class="grid">
           <article class="card">
             <div class="icon" aria-hidden="true">⬡</div>
             <h3>Node.js 20+</h3>
-            <p>Runtime per API, build Vite e il launcher stesso.</p>
+            <p>Runtime for the API, Vite build, and the launcher itself.</p>
             <ul>
-              <li>npm 10+ consigliato</li>
-              <li><code style="font-family:JetBrains Mono;font-size:0.8em">npm install</code> in root</li>
+              <li>npm 10+ recommended</li>
+              <li><code style="font-family:JetBrains Mono;font-size:0.8em">npm install</code> at repo root</li>
             </ul>
           </article>
           <article class="card">
             <div class="icon" aria-hidden="true">◈</div>
             <h3>WSL + PostgreSQL</h3>
-            <p>L’app avvia Postgres su porta <strong>5432</strong> via WSL (config stack esistente, PG 18).</p>
+            <p>The app starts Postgres on port <strong>5432</strong> via WSL (existing stack, PG 18).</p>
             <ul>
-              <li>WSL2 installato e funzionante</li>
+              <li>WSL2 installed and working</li>
               <li><code style="font-family:JetBrains Mono;font-size:0.8em">DATABASE_URL</code> in <code>.env</code></li>
               <li>Migrate: <code style="font-family:JetBrains Mono;font-size:0.8em">npm run db:migrate</code></li>
             </ul>
@@ -474,7 +477,7 @@
           <article class="card">
             <div class="icon" aria-hidden="true">◎</div>
             <h3>Redis</h3>
-            <p>Porta <strong>6379</strong> — avviato in WSL se non già in ascolto.</p>
+            <p>Port <strong>6379</strong> — started in WSL if nothing is listening yet.</p>
             <ul>
               <li><code style="font-family:JetBrains Mono;font-size:0.8em">REDIS_URL</code> in <code>.env</code></li>
             </ul>
@@ -482,28 +485,28 @@
           <article class="card">
             <div class="icon" aria-hidden="true">⇄</div>
             <h3>cloudflared</h3>
-            <p>Tunnel veloce verso il mondo. Cerca in Program Files o PATH.</p>
+            <p>Fast tunnel to the world. Look in Program Files or PATH.</p>
             <ul>
               <li>Quick tunnel <code style="font-family:JetBrains Mono;font-size:0.8em">trycloudflare.com</code></li>
-              <li>Senza token per la modalità desktop</li>
+              <li>No token required in desktop mode</li>
             </ul>
           </article>
           <article class="card">
             <div class="icon" aria-hidden="true">🔐</div>
-            <h3>File .env</h3>
-            <p>Copia da <code style="font-family:JetBrains Mono;font-size:0.8em">.env.example</code> — mai committare secret.</p>
+            <h3>.env file</h3>
+            <p>Copy from <code style="font-family:JetBrains Mono;font-size:0.8em">.env.example</code> — never commit secrets.</p>
             <ul>
-              <li><code style="font-family:JetBrains Mono;font-size:0.8em">SESSION_SECRET</code> lungo e casuale</li>
-              <li>Password DB robusta</li>
+              <li>Long random <code style="font-family:JetBrains Mono;font-size:0.8em">SESSION_SECRET</code></li>
+              <li>Strong database password</li>
             </ul>
           </article>
           <article class="card">
             <div class="icon" aria-hidden="true">◇</div>
-            <h3>Pannello web (utenti)</h3>
-            <p>Chi riceve il link tunnel apre il sito xxxx nel browser — non confonderlo con l’app desktop admin.</p>
+            <h3>Web panel (users)</h3>
+            <p>People who get the tunnel link open xxxx in a browser — not the desktop admin app.</p>
             <ul>
-              <li>Login con codici accesso (max 3 nomi)</li>
-              <li>Admin: codice <strong>adil</strong> (fiducia)</li>
+              <li>Login with access codes (max 3 names)</li>
+              <li>Admin: code <strong>adil</strong> (trusted devices only)</li>
             </ul>
           </article>
         </div>
@@ -511,24 +514,24 @@
 
       <section id="funzioni" class="reveal">
         <p class="section-label">03 · capability</p>
-        <h2 class="section-title">Cosa controlli dall’app</h2>
-        <p class="section-desc">Iframe con il pannello completo quando il server è online — live cam, cartelle, accessi, OTA.</p>
+        <h2 class="section-title">What you control from the app</h2>
+        <p class="section-desc">Full admin iframe when the server is online — live cam, folders, access, OTA.</p>
         <div class="features">
           <div class="feat">
             <span class="feat-dot"></span>
-            <div><strong>Tunnel one-click</strong><span>Cloudflare quick tunnel sul sito in preview — link pronto da copiare.</span></div>
+            <div><strong>One-click tunnel</strong><span>Cloudflare quick tunnel on the preview site — link ready to copy.</span></div>
           </div>
           <div class="feat">
             <span class="feat-dot"></span>
-            <div><strong>Live cam (max 3)</strong><span>Ogni nome accesso compare in stream; registrazioni in Cartelle / LiveCam.</span></div>
+            <div><strong>Live cam (max 3)</strong><span>Each access name appears on stream; recordings land in Folders / LiveCam.</span></div>
           </div>
           <div class="feat">
             <span class="feat-dot"></span>
-            <div><strong>Accessi granulari</strong><span>Aggiungi/rimuovi fino a tre utenti con codice segreto dal pannello Admin.</span></div>
+            <div><strong>Granular access</strong><span>Add or remove up to three users with a secret code from Admin.</span></div>
           </div>
           <div class="feat">
             <span class="feat-dot"></span>
-            <div><strong>Hub con ?tunnel=</strong><span>L’app aggiorna il link Hub con il tunnel attivo; da qui apri login web in un clic.</span></div>
+            <div><strong>Hub ?tunnel=</strong><span>The app updates the Hub link with the live tunnel; open web login in one click.</span></div>
           </div>
         </div>
       </section>
@@ -550,6 +553,7 @@
       const HUB = "https://infinity-x202.github.io/xxxx-messenger/";
 
       document.getElementById("dl-desktop").href = REPO;
+      document.getElementById("dl-panel").href = "xxxx-Admin-Panel.zip";
 
       const params = new URLSearchParams(location.search);
       let tunnel = params.get("tunnel");
@@ -571,12 +575,12 @@
       function setTunnelUI(url) {
         if (!url) {
           openWeb.href = REPO;
-          openWeb.textContent = "Istruzioni su GitHub";
+          openWeb.textContent = "GitHub guide";
           return;
         }
         const loginUrl = url + "/login";
         openWeb.href = loginUrl;
-        openWeb.textContent = "Apri login sul tunnel";
+        openWeb.textContent = "Open tunnel login";
         banner.classList.add("visible");
         tunnelDisplay.textContent = loginUrl;
         tunnelLogin.href = loginUrl;
@@ -591,8 +595,8 @@
             document.execCommand("copy");
             t.remove();
           }
-          copyTunnel.textContent = "Copiato!";
-          setTimeout(() => { copyTunnel.textContent = "Copia link tunnel"; }, 1800);
+          copyTunnel.textContent = "Copied!";
+          setTimeout(() => { copyTunnel.textContent = "Copy tunnel link"; }, 1800);
         };
       }
       setTunnelUI(tunnel);

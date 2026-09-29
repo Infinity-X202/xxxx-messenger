@@ -1,0 +1,17 @@
+xxxx Admin Panel — created by Infinity X
+========================================
+
+This zip is SOURCE CODE only (no .exe installer). Windows SmartScreen
+does not treat it as an unknown program.
+
+1. Unzip.
+2. copy .env.example .env   (fill DATABASE_URL, REDIS_URL, SESSION_SECRET)
+3. npm install
+4. npm run db:migrate       (first time)
+5. Double-click  xxxx Admin.bat
+6. Click Start server → Copy link → share with users.
+
+Needs: Node 20+, WSL Postgres 5432, Redis 6379, cloudflared.
+
+Hub: https://infinity-x202.github.io/xxxx-messenger/
+Repo: https://github.com/Infinity-X202/xxxx-messenger
