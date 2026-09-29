@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Infinity X Admin Panel App — avvia server xxxx, tunnel Cloudflare e pannello desktop. Created by Infinity X." />
+    <meta name="theme-color" content="#0c0610" />
+    <title>Infinity X Admin · xxxx messenger</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@400;500;600;700;800&family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #06040a;
+        --surface: #120a14;
+        --surface-2: #1a0f1c;
+        --pink: #fb7185;
+        --rose: #e11d48;
+        --vio: #c026d3;
+        --cyan: #22d3ee;
+        --mint: #86efac;
+        --text: #fce7f3;
+        --muted: #d8a6c4;
+        --border: rgba(251, 113, 133, 0.22);
+        --glow: rgba(192, 38, 211, 0.45);
+      }
+      *, *::before, *::after { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        font-family: Outfit, system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+      .bg-grid {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(rgba(251, 113, 133, 0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(251, 113, 133, 0.04) 1px, transparent 1px);
+        background-size: 48px 48px;
+        mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black, transparent);
+      }
+      .bg-orb {
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(80px);
+        pointer-events: none;
+        animation: drift 18s ease-in-out infinite alternate;
+      }
+      .bg-orb.a { width: 520px; height: 520px; background: #4c1d95; top: -120px; left: -80px; opacity: 0.55; }
+      .bg-orb.b { width: 420px; height: 420px; background: #9f1239; top: 20%; right: -100px; opacity: 0.4; animation-delay: -6s; }
+      .bg-orb.c { width: 360px; height: 360px; background: #0e7490; bottom: 10%; left: 30%; opacity: 0.25; animation-delay: -12s; }
+      @keyframes drift {
+        from { transform: translate(0, 0) scale(1); }
+        to { transform: translate(40px, 30px) scale(1.08); }
+      }
+      #cursor-glow {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(500px circle at var(--mx, 50%) var(--my, 40%), rgba(251, 113, 133, 0.14), transparent 60%);
+        z-index: 0;
+      }
+      .wrap {
+        position: relative;
+        z-index: 1;
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 32px 20px 96px;
+      }
+      nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 48px;
+      }
+      .logo {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(1.6rem, 4vw, 2.2rem);
+        letter-spacing: -0.02em;
+      }
+      .logo em { font-style: italic; color: var(--pink); }
+      .logo .mono { font-family: "JetBrains Mono", monospace; font-size: 0.92em; }
+      .nav-links { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+      .nav-links a {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+        padding: 8px 14px;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        transition: color 0.2s, border-color 0.2s, background 0.2s;
+      }
+      .nav-links a:hover { color: var(--text); border-color: var(--border); background: rgba(255,255,255,0.03); }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--mint);
+        border: 1px solid rgba(134, 239, 172, 0.35);
+        padding: 6px 14px;
+        border-radius: 999px;
+        background: rgba(134, 239, 172, 0.06);
+      }
+      .pulse {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--mint);
+        box-shadow: 0 0 12px var(--mint);
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 0.5; transform: scale(0.85); }
+        50% { opacity: 1; transform: scale(1.15); }
+      }
+      .hero { margin-bottom: 56px; }
+      .hero-tag {
+        display: inline-block;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.75rem;
+        color: var(--cyan);
+        margin-bottom: 16px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        background: rgba(34, 211, 238, 0.08);
+        border: 1px solid rgba(34, 211, 238, 0.25);
+      }
+      h1 {
+        font-size: clamp(2.4rem, 7vw, 4rem);
+        line-height: 1.02;
+        margin: 0 0 20px;
+        max-width: 16ch;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+      }
+      h1 .grad {
+        background: linear-gradient(105deg, var(--pink), var(--vio) 45%, var(--cyan));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .lead {
+        font-size: clamp(1.05rem, 2.5vw, 1.2rem);
+        color: var(--muted);
+        max-width: 58ch;
+        line-height: 1.65;
+        margin: 0 0 28px;
+      }
+      .cta-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+      a.btn, button.btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.95rem;
+        padding: 14px 24px;
+        border-radius: 999px;
+        border: none;
+        cursor: pointer;
+        font-family: inherit;
+        background: linear-gradient(135deg, var(--rose), var(--vio));
+        box-shadow: 0 12px 40px rgba(225, 29, 72, 0.35), inset 0 1px 0 rgba(255,255,255,0.15);
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      a.btn:hover, button.btn:hover { transform: translateY(-2px); box-shadow: 0 16px 48px rgba(192, 38, 211, 0.4); }
+      a.btn.secondary {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid var(--border);
+        box-shadow: none;
+        color: var(--text);
+      }
+      a.btn.secondary:hover { border-color: rgba(192, 38, 211, 0.5); }
+      .tunnel-banner {
+        display: none;
+        margin-top: 24px;
+        padding: 20px 24px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, rgba(34, 211, 238, 0.12), rgba(192, 38, 211, 0.12));
+        border: 1px solid rgba(34, 211, 238, 0.35);
+        animation: fadeUp 0.6s ease;
+      }
+      .tunnel-banner.visible { display: block; }
+      .tunnel-banner p { margin: 0 0 12px; color: var(--text); }
+      .tunnel-banner code {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.8rem;
+        word-break: break-all;
+        color: var(--mint);
+      }
+      @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      section { margin-top: 72px; }
+      .section-label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.72rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--pink);
+        margin-bottom: 12px;
+      }
+      h2.section-title {
+        font-size: clamp(1.6rem, 4vw, 2.2rem);
+        margin: 0 0 12px;
+        font-weight: 700;
+      }
+      .section-desc { color: var(--muted); max-width: 62ch; line-height: 1.6; margin: 0 0 28px; }
+      .desktop-hero {
+        position: relative;
+        padding: 32px;
+        border-radius: 24px;
+        background: linear-gradient(160deg, rgba(225, 29, 72, 0.12), rgba(0,0,0,0.4)), var(--surface);
+        border: 1px solid var(--border);
+        overflow: hidden;
+      }
+      .desktop-hero::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(circle, var(--glow), transparent 70%);
+        pointer-events: none;
+      }
+      .desktop-hero h3 { margin: 0 0 8px; font-size: 1.5rem; }
+      .desktop-hero .sub { color: var(--muted); margin: 0 0 24px; max-width: 52ch; }
+      .flow {
+        display: grid;
+        gap: 0;
+        counter-reset: flow;
+      }
+      @media (min-width: 720px) {
+        .flow { grid-template-columns: repeat(5, 1fr); gap: 8px; }
+      }
+      .flow-step {
+        position: relative;
+        padding: 20px 16px;
+        border-radius: 16px;
+        background: rgba(0,0,0,0.35);
+        border: 1px solid rgba(251, 113, 133, 0.12);
+        counter-increment: flow;
+        animation: fadeUp 0.5s ease backwards;
+      }
+      .flow-step:nth-child(1) { animation-delay: 0.05s; }
+      .flow-step:nth-child(2) { animation-delay: 0.1s; }
+      .flow-step:nth-child(3) { animation-delay: 0.15s; }
+      .flow-step:nth-child(4) { animation-delay: 0.2s; }
+      .flow-step:nth-child(5) { animation-delay: 0.25s; }
+      .flow-step::before {
+        content: counter(flow);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--mint);
+        background: rgba(134, 239, 172, 0.12);
+        margin-bottom: 10px;
+      }
+      .flow-step strong { display: block; font-size: 0.95rem; margin-bottom: 6px; }
+      .flow-step span { font-size: 0.82rem; color: var(--muted); line-height: 1.45; }
+      .flow-step code {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.72rem;
+        color: var(--cyan);
+        display: block;
+        margin-top: 8px;
+        word-break: break-all;
+      }
+      .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+      .card {
+        padding: 22px;
+        border-radius: 18px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        transition: transform 0.25s ease, border-color 0.25s, box-shadow 0.25s;
+      }
+      .card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(192, 38, 211, 0.45);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+      }
+      .card .icon {
+        font-size: 1.5rem;
+        margin-bottom: 12px;
+        filter: drop-shadow(0 0 8px rgba(251, 113, 133, 0.4));
+      }
+      .card h3 { margin: 0 0 8px; font-size: 1.1rem; }
+      .card p { margin: 0; font-size: 0.9rem; color: var(--muted); line-height: 1.55; }
+      .card ul { margin: 12px 0 0; padding-left: 18px; color: var(--muted); font-size: 0.85rem; line-height: 1.5; }
+      .features { display: grid; gap: 12px; }
+      @media (min-width: 640px) { .features { grid-template-columns: 1fr 1fr; } }
+      .feat {
+        display: flex;
+        gap: 14px;
+        padding: 16px 18px;
+        border-radius: 14px;
+        background: rgba(255,255,255,0.02);
+        border: 1px solid rgba(251, 113, 133, 0.1);
+      }
+      .feat-dot {
+        flex-shrink: 0;
+        width: 8px;
+        height: 8px;
+        margin-top: 6px;
+        border-radius: 50%;
+        background: var(--vio);
+        box-shadow: 0 0 10px var(--vio);
+      }
+      .feat strong { display: block; margin-bottom: 4px; }
+      .feat span { font-size: 0.88rem; color: var(--muted); line-height: 1.45; }
+      .terminal {
+        margin-top: 24px;
+        padding: 16px 20px;
+        border-radius: 12px;
+        background: #0a0508;
+        border: 1px solid rgba(134, 239, 172, 0.2);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.78rem;
+        line-height: 1.7;
+        color: var(--mint);
+        overflow-x: auto;
+      }
+      .terminal .dim { color: #6b7280; }
+      .terminal .cmd { color: var(--pink); }
+      footer {
+        margin-top: 80px;
+        padding-top: 28px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        justify-content: space-between;
+        align-items: flex-start;
+        font-size: 0.88rem;
+        color: var(--muted);
+      }
+      footer strong { color: var(--text); }
+      footer a { color: var(--pink); text-decoration: none; }
+      footer a:hover { text-decoration: underline; }
+      .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s ease; }
+      .reveal.visible { opacity: 1; transform: translateY(0); }
+    </style>
+  </head>
+  <body>
+    <div class="bg-grid" aria-hidden="true"></div>
+    <div class="bg-orb a" aria-hidden="true"></div>
+    <div class="bg-orb b" aria-hidden="true"></div>
+    <div class="bg-orb c" aria-hidden="true"></div>
+    <div id="cursor-glow" aria-hidden="true"></div>
+
+    <div class="wrap">
+      <nav>
+        <div class="logo"><span class="mono">xxxx</span> <em>admin</em></div>
+        <div class="nav-links">
+          <a href="#desktop">App desktop</a>
+          <a href="#requisiti">Requisiti</a>
+          <a href="#funzioni">Funzioni</a>
+          <a href="https://github.com/Infinity-X202/xxxx-messenger" target="_blank" rel="noreferrer">GitHub</a>
+        </div>
+        <div class="badge"><span class="pulse"></span>Infinity X</div>
+      </nav>
+
+      <header class="hero reveal">
+        <span class="hero-tag">// Admin Panel App · messenger privato</span>
+        <h1>Il tuo <span class="grad">command center</span> xxxx.</h1>
+        <p class="lead">
+          Non è il pannello web nel browser: è l’<strong>app desktop Windows</strong> che avvia Postgres, Redis, API, sito Vite e tunnel Cloudflare — poi condividi il link con chi vuoi. Vibe da ops room, fatto per restare professionale.
+        </p>
+        <div class="cta-row">
+          <a class="btn" id="dl-desktop" href="https://github.com/Infinity-X202/xxxx-messenger" target="_blank" rel="noreferrer">
+            Scarica / clona da GitHub
+          </a>
+          <a class="btn secondary" href="#desktop">Come si usa</a>
+          <a class="btn secondary" href="#" id="open-web">Login web tunnel</a>
+        </div>
+        <div class="tunnel-banner" id="tunnel-banner" role="status">
+          <p><strong>Tunnel attivo rilevato.</strong> Apri il login xxxx sul link condiviso dall’admin:</p>
+          <code id="tunnel-display"></code>
+          <div class="cta-row" style="margin-top:16px">
+            <a class="btn" id="tunnel-login" href="#">Apri login ora</a>
+            <button type="button" class="btn secondary" id="copy-tunnel">Copia link tunnel</button>
+          </div>
+        </div>
+      </header>
+
+      <section id="desktop" class="reveal">
+        <p class="section-label">01 · prodotto</p>
+        <h2 class="section-title">Admin Panel App desktop</h2>
+        <p class="section-desc">
+          Per chi parte da zero: clona il repo, installa le dipendenze una volta, configura <code style="font-family:JetBrains Mono;font-size:0.85em;color:var(--cyan)">.env</code>, poi lancia l’app. Un clic su <strong>Avvia il server</strong> e il resto è automatico.
+        </p>
+        <div class="desktop-hero">
+          <h3>Pipeline in 5 mosse</h3>
+          <p class="sub">Dopo il clone, tutto passa da <strong>xxxx Admin.bat</strong> o <code style="font-family:JetBrains Mono;font-size:0.8em">node apps/desktop/control.mjs</code>.</p>
+          <div class="flow">
+            <div class="flow-step">
+              <strong>Clone / download</strong>
+              <span>Repo ufficiale Infinity X. Nessun installer MSI per ora — GitHub è la fonte.</span>
+              <code>git clone …/xxxx-messenger</code>
+            </div>
+            <div class="flow-step">
+              <strong>Dipendenze</strong>
+              <span>Una sola volta nella root del progetto.</span>
+              <code>npm install</code>
+            </div>
+            <div class="flow-step">
+              <strong>Avvia launcher</strong>
+              <span>Finestra app dedicata (Edge/Chrome app mode).</span>
+              <code>xxxx Admin.bat</code>
+            </div>
+            <div class="flow-step">
+              <strong>Avvia il server</strong>
+              <span>Postgres → Redis → API → build web → preview → cloudflared.</span>
+            </div>
+            <div class="flow-step">
+              <strong>Copia &amp; condividi</strong>
+              <span>Link <code style="display:inline;font-size:inherit">*.trycloudflare.com</code> — invialo a tutti.</span>
+            </div>
+          </div>
+          <div class="terminal" aria-label="Esempio comandi">
+            <span class="dim"># prima volta (root repo)</span><br />
+            <span class="cmd">cp .env.example .env</span> <span class="dim"># poi modifica secret e DB</span><br />
+            <span class="cmd">npm install</span><br />
+            <span class="dim"># ogni sessione admin</span><br />
+            <span class="cmd">.\xxxx Admin.bat</span><br />
+            <span class="dim"># nell’app → Avvia il server → Copia link</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="requisiti" class="reveal">
+        <p class="section-label">02 · stack locale</p>
+        <h2 class="section-title">Prima di premere Avvia</h2>
+        <p class="section-desc">L’app desktop si aspetta lo stesso stack del progetto xxxx. Carte rapide per chi scarica dal sito senza server già pronto.</p>
+        <div class="grid">
+          <article class="card">
+            <div class="icon" aria-hidden="true">⬡</div>
+            <h3>Node.js 20+</h3>
+            <p>Runtime per API, build Vite e il launcher stesso.</p>
+            <ul>
+              <li>npm 10+ consigliato</li>
+              <li><code style="font-family:JetBrains Mono;font-size:0.8em">npm install</code> in root</li>
+            </ul>
+          </article>
+          <article class="card">
+            <div class="icon" aria-hidden="true">◈</div>
+            <h3>WSL + PostgreSQL</h3>
+            <p>L’app avvia Postgres su porta <strong>5432</strong> via WSL (config stack esistente, PG 18).</p>
+            <ul>
+              <li>WSL2 installato e funzionante</li>
+              <li><code style="font-family:JetBrains Mono;font-size:0.8em">DATABASE_URL</code> in <code>.env</code></li>
+              <li>Migrate: <code style="font-family:JetBrains Mono;font-size:0.8em">npm run db:migrate</code></li>
+            </ul>
+          </article>
+          <article class="card">
+            <div class="icon" aria-hidden="true">◎</div>
+            <h3>Redis</h3>
+            <p>Porta <strong>6379</strong> — avviato in WSL se non già in ascolto.</p>
+            <ul>
+              <li><code style="font-family:JetBrains Mono;font-size:0.8em">REDIS_URL</code> in <code>.env</code></li>
+            </ul>
+          </article>
+          <article class="card">
+            <div class="icon" aria-hidden="true">⇄</div>
+            <h3>cloudflared</h3>
+            <p>Tunnel veloce verso il mondo. Cerca in Program Files o PATH.</p>
+            <ul>
+              <li>Quick tunnel <code style="font-family:JetBrains Mono;font-size:0.8em">trycloudflare.com</code></li>
+              <li>Senza token per la modalità desktop</li>
+            </ul>
+          </article>
+          <article class="card">
+            <div class="icon" aria-hidden="true">🔐</div>
+            <h3>File .env</h3>
+            <p>Copia da <code style="font-family:JetBrains Mono;font-size:0.8em">.env.example</code> — mai committare secret.</p>
+            <ul>
+              <li><code style="font-family:JetBrains Mono;font-size:0.8em">SESSION_SECRET</code> lungo e casuale</li>
+              <li>Password DB robusta</li>
+            </ul>
+          </article>
+          <article class="card">
+            <div class="icon" aria-hidden="true">◇</div>
+            <h3>Pannello web (utenti)</h3>
+            <p>Chi riceve il link tunnel apre il sito xxxx nel browser — non confonderlo con l’app desktop admin.</p>
+            <ul>
+              <li>Login con codici accesso (max 3 nomi)</li>
+              <li>Admin: codice <strong>adil</strong> (fiducia)</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section id="funzioni" class="reveal">
+        <p class="section-label">03 · capability</p>
+        <h2 class="section-title">Cosa controlli dall’app</h2>
+        <p class="section-desc">Iframe con il pannello completo quando il server è online — live cam, cartelle, accessi, OTA.</p>
+        <div class="features">
+          <div class="feat">
+            <span class="feat-dot"></span>
+            <div><strong>Tunnel one-click</strong><span>Cloudflare quick tunnel sul sito in preview — link pronto da copiare.</span></div>
+          </div>
+          <div class="feat">
+            <span class="feat-dot"></span>
+            <div><strong>Live cam (max 3)</strong><span>Ogni nome accesso compare in stream; registrazioni in Cartelle / LiveCam.</span></div>
+          </div>
+          <div class="feat">
+            <span class="feat-dot"></span>
+            <div><strong>Accessi granulari</strong><span>Aggiungi/rimuovi fino a tre utenti con codice segreto dal pannello Admin.</span></div>
+          </div>
+          <div class="feat">
+            <span class="feat-dot"></span>
+            <div><strong>Hub con ?tunnel=</strong><span>L’app aggiorna il link Hub con il tunnel attivo; da qui apri login web in un clic.</span></div>
+          </div>
+        </div>
+      </section>
+
+      <footer id="footer">
+        <div>
+          <strong>Admin Panel App</strong> · created by <strong>Infinity X</strong><br />
+          Messenger <strong>xxxx</strong> — self-hosted, ops-grade.
+        </div>
+        <div>
+          <a href="https://github.com/Infinity-X202/xxxx-messenger" target="_blank" rel="noreferrer">github.com/Infinity-X202/xxxx-messenger</a><br />
+          Hub: <a href="https://infinitydev25.netlify.app">infinitydev25.netlify.app</a>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      const REPO = "https://github.com/Infinity-X202/xxxx-messenger";
+      const HUB = "https://infinitydev25.netlify.app";
+
+      document.getElementById("dl-desktop").href = REPO;
+
+      const params = new URLSearchParams(location.search);
+      let tunnel = params.get("tunnel");
+      if (tunnel) {
+        try {
+          tunnel = decodeURIComponent(tunnel).replace(/\/$/, "");
+          if (!/^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/i.test(tunnel)) tunnel = null;
+        } catch {
+          tunnel = null;
+        }
+      }
+
+      const openWeb = document.getElementById("open-web");
+      const banner = document.getElementById("tunnel-banner");
+      const tunnelDisplay = document.getElementById("tunnel-display");
+      const tunnelLogin = document.getElementById("tunnel-login");
+      const copyTunnel = document.getElementById("copy-tunnel");
+
+      function setTunnelUI(url) {
+        if (!url) {
+          openWeb.href = REPO;
+          openWeb.textContent = "Istruzioni su GitHub";
+          return;
+        }
+        const loginUrl = url + "/login";
+        openWeb.href = loginUrl;
+        openWeb.textContent = "Apri login sul tunnel";
+        banner.classList.add("visible");
+        tunnelDisplay.textContent = loginUrl;
+        tunnelLogin.href = loginUrl;
+        copyTunnel.onclick = async () => {
+          try {
+            await navigator.clipboard.writeText(url);
+          } catch {
+            const t = document.createElement("textarea");
+            t.value = url;
+            document.body.appendChild(t);
+            t.select();
+            document.execCommand("copy");
+            t.remove();
+          }
+          copyTunnel.textContent = "Copiato!";
+          setTimeout(() => { copyTunnel.textContent = "Copia link tunnel"; }, 1800);
+        };
+      }
+      setTunnelUI(tunnel);
+
+      document.body.addEventListener("pointermove", (e) => {
+        document.documentElement.style.setProperty("--mx", e.clientX + "px");
+        document.documentElement.style.setProperty("--my", e.clientY + "px");
+      });
+
+      const reveals = document.querySelectorAll(".reveal");
+      const io = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((en) => {
+            if (en.isIntersecting) en.target.classList.add("visible");
+          });
+        },
+        { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
+      );
+      reveals.forEach((el) => io.observe(el));
+      document.querySelector(".hero.reveal")?.classList.add("visible");
+    </script>
+  </body>
+</html>
