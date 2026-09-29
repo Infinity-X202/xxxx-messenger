@@ -38,8 +38,8 @@
       button.primary { background: linear-gradient(90deg, #e11d48, #c026d3); color: #fff; font-weight: 600; }
       button:disabled { opacity: 0.45; cursor: default; }
       button.copied { background: #166534; }
-      .phase { font-size: 12px; color: #86efac; min-width: 4rem; }
-      .phase.err { color: #fca5a5; }
+      .phase { font-size: 12px; color: #86efac; min-width: 4rem; max-width: 280px; }
+      .phase.err { color: #fca5a5; white-space: normal; }
       .link {
         flex: 1;
         min-width: 200px;
@@ -189,8 +189,14 @@
       async function refresh() {
         const state = await fetch("/api/state").then((r) => r.json());
         updateHints(state.phase);
-        const label = state.busy && state.phase !== "setup" ? "starting…" : state.phase;
+        const label =
+          state.phase === "error"
+            ? state.error || "error"
+            : state.busy && state.phase !== "setup"
+              ? "starting…"
+              : state.phase;
         phase.textContent = label;
+        phase.title = state.error || "";
         phase.classList.toggle("err", state.phase === "error");
         startBtn.disabled = state.busy;
         logEl.textContent = (state.log || []).join("\n");

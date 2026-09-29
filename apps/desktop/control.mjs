@@ -21,6 +21,13 @@ function npmCmd() {
   return process.platform === "win32" ? "npm.cmd" : "npm";
 }
 
+function runNpm(args) {
+  if (process.platform === "win32") {
+    return run("cmd.exe", ["/d", "/s", "/c", "npm", ...args], { cwd: repo });
+  }
+  return run("npm", args, { cwd: repo });
+}
+
 function readSetupHints() {
   const envPath = path.join(repo, ".env");
   const envExample = path.join(repo, ".env.example");
@@ -37,6 +44,7 @@ const state = {
   phase: "idle",
   busy: false,
   tunnelUrl: "",
+  error: "",
   log: [],
   setup: readSetupHints(),
 };
@@ -153,21 +161,120 @@ async function ensureFirstRunReady() {
   if (!existsSync(path.join(repo, "node_modules"))) {
     state.phase = "setup";
     log("First-time setup (2/4): installing packages — please wait…");
-    await run(npmCmd(), ["install"], { cwd: repo });
+    await runNpm(["install"]);
     log("Packages installed.");
   }
 
   state.setup = readSetupHints();
 }
 
+function databasePassword() {
+  try {
+    const envText = readFileSync(path.join(repo, ".env"), "utf8");
+    const line = envText.split(/\r?\n/).find((l) => l.startsWith("DATABASE_URL="));
+    if (!line) return "change_me_strong_password";
+    const url = line.slice("DATABASE_URL=".length).trim();
+    const m = url.match(/postgresql:\/\/[^:]+:([^@]+)@/);
+    return m ? decodeURIComponent(m[1]) : "change_me_strong_password";
+  } catch {
+    return "change_me_strong_password";
+  }
+}
+
+async function alignDatabaseLogin() {
+  const pass = databasePassword().replace(/'/g, "''");
+  mkdirSync(storageDir, { recursive: true });
+  const sqlPath = path.join(storageDir, "align-db.sql");
+  writeFileSync(
+    sqlPath,
+    `DO $$ BEGIN
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'ixm') THEN
+    CREATE ROLE ixm LOGIN PASSWORD '${pass}' SUPERUSER;
+  ELSE
+    ALTER ROLE ixm WITH LOGIN PASSWORD '${pass}' SUPERUSER;
+  END IF;
+END $$;
+SELECT 'ok';
+`,
+    "utf8",
+  );
+  const wslSql = sqlPath.replace(/\\/g, "/").replace(/^([A-Za-z]):/, (_, d) => `/mnt/${d.toLowerCase()}`);
+  await run(
+    "wsl.exe",
+    [
+      "-u",
+      "postgres",
+      "-e",
+      "bash",
+      "-lc",
+      `psql -d postgres -v ON_ERROR_STOP=1 -f '${wslSql}' && (psql -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='infinity_x'" | grep -q 1 || createdb -O ixm infinity_x)`,
+    ],
+    { allowFail: true },
+  );
+}
+
+async function startPostgres() {
+  if (await portOpen(5432)) return;
+  log("Looking for Postgres in WSL…");
+  const found = await run(
+    "wsl.exe",
+    ["-e", "bash", "-lc", "ls -d /usr/lib/postgresql/*/bin/pg_ctl 2>/dev/null | sort -V | tail -1"],
+    { allowFail: true },
+  );
+  const pgCtl = found.trim().split(/\r?\n/).filter(Boolean).pop();
+  if (pgCtl && pgCtl.includes("pg_ctl")) {
+    const major = pgCtl.match(/postgresql\/(\d+)\//)?.[1] || "18";
+    await run(
+      "wsl.exe",
+      [
+        "-u",
+        "postgres",
+        "-e",
+        "bash",
+        "-lc",
+        `${pgCtl} -D /var/lib/postgresql/${major}/main -l /tmp/pg-ixm.log -o '-c config_file=/etc/postgresql/${major}/main/postgresql.conf -c unix_socket_directories=/tmp -c listen_addresses=*' start`,
+      ],
+      { allowFail: true },
+    );
+  } else {
+    await run("wsl.exe", ["-e", "bash", "-lc", "sudo service postgresql start || sudo pg_ctlcluster 18 main start || true"], {
+      allowFail: true,
+    });
+  }
+}
+
 async function ensureDatabaseMigrated() {
   if (existsSync(setupDoneFlag)) return;
   state.phase = "setup";
-  log("First-time setup (3/4): database migrate…");
-  await run(npmCmd(), ["run", "db:generate"], { cwd: repo });
-  await run(npmCmd(), ["run", "db:migrate"], { cwd: repo });
+  log("Preparing database (non-interactive)…");
+  await alignDatabaseLogin();
+  await runNpm(["run", "db:generate"]);
+  await runNpm(["run", "db:migrate:deploy", "-w", "@ixm/server"]);
   writeFileSync(setupDoneFlag, new Date().toISOString(), "utf8");
   log("Database ready.");
+}
+
+async function ensureCloudflared() {
+  if (existsSync(cloudflared) && cloudflared.endsWith(".exe")) return cloudflared;
+  const bundled = path.join(storageDir, "bin", "cloudflared.exe");
+  if (existsSync(bundled)) return bundled;
+  const which = await run("where.exe", ["cloudflared"], { allowFail: true });
+  const hit = which.split(/\r?\n/).map((s) => s.trim()).find((s) => s.toLowerCase().endsWith("cloudflared.exe"));
+  if (hit && existsSync(hit)) return hit;
+  state.phase = "setup";
+  log("Downloading Cloudflare tunnel tool (one time)…");
+  mkdirSync(path.dirname(bundled), { recursive: true });
+  await run(
+    "powershell.exe",
+    [
+      "-NoProfile",
+      "-Command",
+      `Invoke-WebRequest -Uri 'https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe' -OutFile '${bundled.replace(/'/g, "''")}'`,
+    ],
+    { cwd: repo },
+  );
+  if (!existsSync(bundled)) throw new Error("Could not download cloudflared");
+  return bundled;
 }
 
 async function accessCmd(args) {
@@ -190,23 +297,11 @@ async function startStack() {
   state.phase = "starting";
   state.tunnelUrl = "";
   try {
+    state.error = "";
     await ensureFirstRunReady();
     log("Starting Postgres…");
-    if (!(await portOpen(5432))) {
-      await run(
-        "wsl.exe",
-        [
-          "-u",
-          "postgres",
-          "-e",
-          "bash",
-          "-lc",
-          "/usr/lib/postgresql/18/bin/pg_ctl -D /var/lib/postgresql/18/main -l /tmp/pg-18-main.log -o '-c config_file=/etc/postgresql/18/main/postgresql.conf -c unix_socket_directories=/tmp -c listen_addresses=*' start",
-        ],
-        { allowFail: true },
-      );
-    }
-    await waitUntil(() => portOpen(5432), 25000, "Postgres is not responding");
+    await startPostgres();
+    await waitUntil(() => portOpen(5432), 35000, "Postgres is not responding. Install WSL + PostgreSQL, then press Start server again.");
     log("Postgres ready.");
 
     log("Starting Redis…");
@@ -267,12 +362,13 @@ async function startStack() {
     log("Site ready.");
 
     log("Opening Cloudflare tunnel…");
+    const tunnelBin = await ensureCloudflared();
     await new Promise((resolve) => {
       execFile("taskkill", ["/IM", "cloudflared.exe", "/F"], { windowsHide: true }, () => resolve());
     });
     await new Promise((r) => setTimeout(r, 500));
     const tunnel = track(
-      spawn(cloudflared, ["tunnel", "--url", "http://127.0.0.1:5173", "--protocol", "http2"], {
+      spawn(tunnelBin, ["tunnel", "--url", "http://127.0.0.1:5173", "--protocol", "http2"], {
         cwd: repo,
         windowsHide: true,
       }),
@@ -299,8 +395,10 @@ async function startStack() {
     log(`Link ready: ${url}`);
     log("Send this link to the admin. After login, add guests in Access and grant permissions — live cam and folders will follow.");
   } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
     state.phase = "error";
-    log(err instanceof Error ? err.message : String(err));
+    state.error = message.replace(/\s+/g, " ").slice(0, 180);
+    log(message);
   } finally {
     state.busy = false;
   }
